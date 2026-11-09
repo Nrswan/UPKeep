@@ -1,0 +1,43 @@
+import type { AssetKind } from './types';
+
+export type Preset = {
+  title: string;
+  everyMonths?: number;
+  everyMiles?: number;
+  note?: string;
+};
+
+/**
+ * Starter schedules. These are common rules of thumb, not manufacturer specs.
+ * Every interval can be changed in the app.
+ */
+export const PRESETS: Record<AssetKind, Preset[]> = {
+  home: [
+    { title: 'Replace HVAC air filter', everyMonths: 3 },
+    { title: 'Test smoke and CO alarms', everyMonths: 1 },
+    { title: 'Replace smoke alarm batteries', everyMonths: 12 },
+    { title: 'Clean gutters', everyMonths: 6 },
+    { title: 'Flush water heater', everyMonths: 12 },
+    { title: 'Clean dryer vent', everyMonths: 12 },
+    { title: 'Service heating and cooling', everyMonths: 12 },
+    { title: 'Clean refrigerator coils', everyMonths: 12 },
+    { title: 'Clean range hood filter', everyMonths: 6 },
+    { title: 'Check fire extinguisher', everyMonths: 12 },
+    { title: 'Inspect roof', everyMonths: 12 },
+    { title: 'Check caulk around tubs and windows', everyMonths: 12 },
+  ],
+  vehicle: [
+    { title: 'Oil and filter change', everyMonths: 6, everyMiles: 5000 },
+    { title: 'Rotate tires', everyMonths: 6, everyMiles: 6000 },
+    { title: 'Check tire pressure', everyMonths: 1 },
+    { title: 'Replace engine air filter', everyMonths: 12, everyMiles: 15000 },
+    { title: 'Replace cabin air filter', everyMonths: 12, everyMiles: 15000 },
+    { title: 'Inspect brakes', everyMonths: 12, everyMiles: 12000 },
+    { title: 'Replace wiper blades', everyMonths: 12 },
+    { title: 'Test battery', everyMonths: 12 },
+    { title: 'Change brake fluid', everyMonths: 24, everyMiles: 30000 },
+    { title: 'Change transmission fluid', everyMonths: 48, everyMiles: 50000 },
+    { title: 'Flush coolant', everyMonths: 60, everyMiles: 60000 },
+    { title: 'Renew registration', everyMonths: 12 },
+  ],
+};
