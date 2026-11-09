@@ -1,7 +1,9 @@
-import type { Asset, DueInfo, LogEntry, Task } from './types';
+import type { Asset, DueInfo, LogEntry, Task, WarrantyInfo, WarrantyItem } from './types';
 
 /** Miles left at which a mileage task counts as due soon. */
 export const SOON_MILES = 500;
+/** Days before a warranty ends at which it counts as ending soon. */
+export const WARRANTY_SOON_DAYS = 30;
 /** Rough daily driving used only to sort mileage tasks against date tasks. */
 const MILES_PER_DAY = 33;
 
@@ -147,4 +149,33 @@ export function describeInterval(task: Pick<Task, 'everyMonths' | 'everyMiles'>)
   if (!parts.length) return 'No schedule';
   const s = parts.join(' or ');
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function spanLabel(days: number): string {
+  if (days >= 365) {
+    const years = Math.floor(days / 365);
+    const months = Math.floor((days % 365) / 30);
+    return `${years} yr${months ? ` ${months} mo` : ''}`;
+  }
+  if (days > 60) return `${Math.round(days / 30)} months`;
+  return days === 1 ? '1 day' : `${days} days`;
+}
+
+/** Works out when a warranty ends and how close that is. */
+export function warrantyInfo(item: Pick<WarrantyItem, 'purchasedAt' | 'months'>, today: string): WarrantyInfo {
+  const expiresAt = addMonths(item.purchasedAt, item.months);
+  const daysLeft = diffDays(today, expiresAt);
+  if (daysLeft < 0) return { status: 'expired', expiresAt, daysLeft, label: 'Expired' };
+  if (daysLeft === 0) return { status: 'soon', expiresAt, daysLeft, label: 'Ends today' };
+  return {
+    status: daysLeft <= WARRANTY_SOON_DAYS ? 'soon' : 'ok',
+    expiresAt,
+    daysLeft,
+    label: `${spanLabel(daysLeft)} left`,
+  };
+}
+
+export function describeMonths(months: number): string {
+  if (months % 12 === 0) return months === 12 ? '1 year' : `${months / 12} years`;
+  return months === 1 ? '1 month' : `${months} months`;
 }

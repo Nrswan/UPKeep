@@ -4,14 +4,27 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useStore } from '../lib/store';
 import { useTheme } from '../lib/theme';
-import type { DueInfo, Task } from '../lib/types';
-import { Card, StatusPill, styles as ui } from './ui';
+import { taskIcon } from '../lib/taskIcon';
+import type { AssetKind, DueInfo, Task } from '../lib/types';
+import { Card, IconBadge, StatusPill, styles as ui } from './ui';
 
-export function TaskRow({ task, due, assetName }: { task: Task; due: DueInfo; assetName?: string }) {
+export function TaskRow({
+  task,
+  due,
+  kind,
+  assetName,
+}: {
+  task: Task;
+  due: DueInfo;
+  kind: AssetKind;
+  assetName?: string;
+}) {
   const t = useTheme();
   const logDone = useStore((s) => s.logDone);
+  const icon = taskIcon(task.title, kind);
   return (
     <Card style={local.row}>
+      <IconBadge name={icon.name} color={icon.color} />
       <Pressable
         style={local.main}
         accessibilityRole="button"

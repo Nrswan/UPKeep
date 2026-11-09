@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
@@ -115,16 +115,42 @@ export function Empty({ icon, title, body }: { icon: keyof typeof Ionicons.glyph
   );
 }
 
+/** A small icon on a soft tint of its own color. */
+export function IconBadge({
+  name,
+  color,
+  size = 44,
+}: {
+  name: keyof typeof MaterialCommunityIcons.glyphMap;
+  color: string;
+  size?: number;
+}) {
+  return (
+    <View style={{ width: size, height: size, borderRadius: size * 0.28, backgroundColor: `${color}26`, alignItems: 'center', justifyContent: 'center' }}>
+      <MaterialCommunityIcons name={name} size={size * 0.55} color={color} />
+    </View>
+  );
+}
+
 /** Picks a past date without a native date picker. Never goes past today. */
-export function DateStepper({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function DateStepper({
+  value,
+  onChange,
+  label = 'Date done',
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  label?: string;
+}) {
   const t = useTheme();
   const today = todayStr();
   const clamp = (v: string) => (v > today ? today : v);
   return (
     <View style={styles.field}>
-      <Text style={[styles.label, { color: t.sub }]}>Date done</Text>
+      <Text style={[styles.label, { color: t.sub }]}>{label}</Text>
       <Text style={[styles.dateValue, { color: t.text }]}>{value === today ? 'Today' : formatDate(value)}</Text>
       <View style={styles.row}>
+        <Button small kind="plain" label="-1 year" onPress={() => onChange(addMonths(value, -12))} />
         <Button small kind="plain" label="-1 month" onPress={() => onChange(addMonths(value, -1))} />
         <Button small kind="plain" label="-1 day" onPress={() => onChange(addDays(value, -1))} />
         <Button small kind="plain" label="+1 day" disabled={value >= today} onPress={() => onChange(clamp(addDays(value, 1)))} />

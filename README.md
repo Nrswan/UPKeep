@@ -11,6 +11,9 @@ Home and vehicle maintenance reminders for iPhone and Android. One codebase, bui
 - Due tab sorts everything into Overdue, Due soon, Not logged yet and Later
 - One tap to mark a task done, or open it to log a past date, mileage, cost and a note
 - History per task and money spent this year per home or vehicle
+- Year, make and model dropdowns for vehicles. Models come live from NHTSA's free vPIC service, with type-your-own as the fallback
+- Warranties tab for things you bought: purchase date, length, price, store and a reminder 30 days before coverage ends
+- Photos from the camera or library on homes, vehicles, warranty items and service logs
 - Local reminders at 9 AM with a heads-up window you pick in Settings
 - Light and dark mode
 - No account and no server. Data stays on the phone
@@ -42,7 +45,10 @@ src/app/            screens (Expo Router, file based)
   task/             add and view a task
 src/components/     shared UI
 src/lib/
-  due.ts            due date and mileage math (pure, tested)
+  due.ts            due date, mileage and warranty math (pure, tested)
+  photos.ts         camera, library and saved photo files
+  vehicles.ts       year and make lists, live model lookup
+  taskIcon.ts       icon and color for each kind of task
   presets.ts        starter schedules. Edit these freely
   store.ts          app data, saved to the phone with AsyncStorage
   reminders.ts      local notification scheduling
@@ -71,4 +77,5 @@ npx eas-cli@latest submit --platform all
 
 - Mileage tasks cannot fire a notification on their own because the app does not know the odometer until you update it. They show as due in the app once mileage is entered.
 - No backup or sync. Deleting the app deletes the data.
-- Starter intervals are general rules of thumb, not manufacturer specs.
+- Starter intervals are general rules of thumb, not manufacturer specs. Picking a year, make and model does not load that vehicle's factory schedule. That data is only sold through paid providers, so it needs a paid API and a small server to hold the key.
+- Photos live in the app's own storage on the phone. They are not added to the camera roll and are removed if the app is deleted.

@@ -14,12 +14,13 @@ export default function RootLayout() {
   const assets = useStore((s) => s.assets);
   const tasks = useStore((s) => s.tasks);
   const logs = useStore((s) => s.logs);
+  const warranties = useStore((s) => s.warranties);
   const settings = useStore((s) => s.settings);
 
   // Reminders are rebuilt from scratch whenever saved data changes.
   useEffect(() => {
-    if (hydrated) syncReminders({ assets, tasks, logs, settings });
-  }, [hydrated, assets, tasks, logs, settings]);
+    if (hydrated) syncReminders({ assets, tasks, logs, warranties, settings });
+  }, [hydrated, assets, tasks, logs, warranties, settings]);
 
   if (!hydrated) return null;
 
@@ -40,6 +41,8 @@ export default function RootLayout() {
         <Stack.Screen name="asset/[id]" options={{ title: '' }} />
         <Stack.Screen name="task/new" options={{ title: 'New task', presentation: 'modal' }} />
         <Stack.Screen name="task/[id]" options={{ title: '' }} />
+        <Stack.Screen name="warranty/new" options={{ title: 'Add a warranty', presentation: 'modal' }} />
+        <Stack.Screen name="warranty/[id]" options={{ title: 'Warranty' }} />
       </Stack>
     </>
   );

@@ -16,6 +16,10 @@ const light = {
   warnBg: '#FFF1D6',
   okBg: '#E3F1EA',
   muted: '#ECEEE9',
+  purple: '#6D4AC4',
+  purpleBg: '#EEE8FB',
+  blue: '#1E6FB8',
+  blueBg: '#E3EFFA',
 };
 
 const dark: typeof light = {
@@ -32,6 +36,10 @@ const dark: typeof light = {
   warnBg: '#3A2D0E',
   okBg: '#163126',
   muted: '#222B26',
+  purple: '#B9A2F2',
+  purpleBg: '#2A2142',
+  blue: '#7DB9F0',
+  blueBg: '#152A3D',
 };
 
 export type Theme = typeof light;
@@ -52,3 +60,11 @@ export function statusColors(t: Theme, status: DueStatus): { fg: string; bg: str
       return { fg: t.sub, bg: t.muted };
   }
 }
+
+/** Gradients read the same in light and dark mode, with white text on top. */
+export const gradients = {
+  home: ['#1F8A63', '#0F5C4A'],
+  vehicle: ['#2D7FD3', '#1B4E96'],
+  warranty: ['#7B56D6', '#4B2FA0'],
+  hero: ['#1F8A63', '#176B7A', '#1B4E96'],
+} as const;

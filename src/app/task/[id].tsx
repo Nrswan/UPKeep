@@ -3,9 +3,11 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { PhotoStrip } from '../../components/PhotoStrip';
 import { TaskForm } from '../../components/TaskForm';
 import { Button, Card, DateStepper, Empty, Field, Screen, SectionTitle, StatusPill, styles as ui, toNumber } from '../../components/ui';
 import { computeDue, describeInterval, formatDate, latestLog, todayStr } from '../../lib/due';
+import { removePhotos } from '../../lib/photos';
 import { useStore } from '../../lib/store';
 import { useTheme } from '../../lib/theme';
 
@@ -26,6 +28,7 @@ export default function TaskDetail() {
   const [miles, setMiles] = useState('');
   const [cost, setCost] = useState('');
   const [note, setNote] = useState('');
+  const [photos, setPhotos] = useState<string[]>([]);
 
   const history = useMemo(
     () => allLogs.filter((l) => l.taskId === id).sort((a, b) => (a.doneAt < b.doneAt ? 1 : -1)),
@@ -48,12 +51,13 @@ export default function TaskDetail() {
     setMiles(asset.mileage != null ? String(asset.mileage) : '');
     setCost('');
     setNote('');
+    setPhotos([]);
     setMode('log');
   };
 
   const saveLog = () => {
     const m = toNumber(miles);
-    logDone(task.id, { doneAt, miles: isVehicle && m != null ? Math.round(m) : undefined, cost: toNumber(cost), note });
+    logDone(task.id, { doneAt, miles: isVehicle && m != null ? Math.round(m) : undefined, cost: toNumber(cost), note, photos });
     setMode('view');
   };
 
@@ -65,6 +69,7 @@ export default function TaskDetail() {
         style: 'destructive',
         onPress: () => {
           router.back();
+          removePhotos(history.flatMap((l) => l.photos ?? []));
           removeTask(task.id);
         },
       },
@@ -100,8 +105,16 @@ export default function TaskDetail() {
           ) : null}
           <Field label="Cost (optional)" value={cost} onChangeText={setCost} keyboardType="decimal-pad" placeholder="0.00" />
           <Field label="Note (optional)" value={note} onChangeText={setNote} placeholder="Parts used, shop, anything worth remembering" />
+          <PhotoStrip label="Photos of the receipt or work (optional)" photos={photos} onChange={setPhotos} />
           <Button label="Save" onPress={saveLog} />
-          <Button kind="plain" label="Cancel" onPress={() => setMode('view')} />
+          <Button
+            kind="plain"
+            label="Cancel"
+            onPress={() => {
+              removePhotos(photos);
+              setMode('view');
+            }}
+          />
         </Card>
       ) : null}
 
@@ -136,12 +149,16 @@ export default function TaskDetail() {
                 .filter(Boolean)
                 .join('  ·  ') || 'Done'}
             </Text>
+            <PhotoStrip photos={l.photos ?? []} size={64} />
           </View>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Delete entry from ${formatDate(l.doneAt)}`}
             hitSlop={10}
-            onPress={() => removeLog(l.id)}
+            onPress={() => {
+              removePhotos(l.photos ?? []);
+              removeLog(l.id);
+            }}
           >
             <Ionicons name="trash-outline" size={20} color={t.sub} />
           </Pressable>

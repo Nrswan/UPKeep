@@ -38,6 +38,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="warranties"
+        options={{
+          title: 'Warranties',
+          tabBarIcon: ({ focused, size }) => <Ionicons name="shield-checkmark-outline" color={focused ? t.primary : t.sub} size={size} />,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',

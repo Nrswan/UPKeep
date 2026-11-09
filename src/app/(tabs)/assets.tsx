@@ -1,14 +1,14 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Button, Card, Empty, Screen, styles as ui } from '../../components/ui';
+import { Banner } from '../../components/Banner';
+import { Button, Empty, Screen } from '../../components/ui';
 import { useStore } from '../../lib/store';
-import { useTheme } from '../../lib/theme';
+import { gradients } from '../../lib/theme';
 import { useDueItems } from '../../lib/useDue';
+import { vehicleLabel } from '../../lib/vehicles';
 
 export default function AssetsScreen() {
-  const t = useTheme();
   const assets = useStore((s) => s.assets);
   const items = useDueItems();
 
@@ -24,26 +24,32 @@ export default function AssetsScreen() {
         const soon = mine.filter((i) => i.due.status === 'soon').length;
         const summary =
           overdue > 0 ? `${overdue} overdue` : soon > 0 ? `${soon} due soon` : `${mine.length} ${mine.length === 1 ? 'task' : 'tasks'}`;
+        const detail = [
+          a.kind === 'vehicle' && vehicleLabel(a) !== a.name ? vehicleLabel(a) : null,
+          a.mileage != null ? `${a.mileage.toLocaleString()} mi` : null,
+        ]
+          .filter(Boolean)
+          .join('  ·  ');
         return (
           <Pressable
             key={a.id}
             accessibilityRole="button"
             accessibilityLabel={`${a.name}. ${summary}`}
             onPress={() => router.push({ pathname: '/asset/[id]', params: { id: a.id } })}
+            style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
           >
-            <Card style={local.row}>
-              <View style={[local.icon, { backgroundColor: t.okBg }]}>
-                <Ionicons name={a.kind === 'home' ? 'home' : 'car'} size={22} color={t.primary} />
+            <Banner
+              colors={a.kind === 'home' ? gradients.home : gradients.vehicle}
+              icon={a.kind === 'home' ? 'home-variant' : 'car-side'}
+              photo={a.photo}
+              title={a.name}
+              subtitle={detail || undefined}
+              height={140}
+            >
+              <View style={[local.chip, overdue > 0 && local.chipAlert, overdue === 0 && soon > 0 && local.chipWarn]}>
+                <Text style={[local.chipText, (overdue > 0 || soon > 0) && local.chipTextDark]}>{summary}</Text>
               </View>
-              <View style={local.main}>
-                <Text style={[ui.title, { color: t.text }]}>{a.name}</Text>
-                <Text style={[ui.sub, { color: overdue > 0 ? t.danger : soon > 0 ? t.warn : t.sub }]}>
-                  {summary}
-                  {a.mileage != null ? `  ·  ${a.mileage.toLocaleString()} mi` : ''}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={t.sub} />
-            </Card>
+            </Banner>
           </Pressable>
         );
       })}
@@ -54,7 +60,9 @@ export default function AssetsScreen() {
 }
 
 const local = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  icon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  main: { flex: 1, gap: 2 },
+  chip: { alignSelf: 'flex-start', marginTop: 6, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: 'rgba(255,255,255,0.22)' },
+  chipAlert: { backgroundColor: '#FFD9D4' },
+  chipWarn: { backgroundColor: '#FFE7B3' },
+  chipText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  chipTextDark: { color: '#3A1A17' },
 });

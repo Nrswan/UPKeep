@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Alert, Linking, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { Button, Card, Screen, SectionTitle, styles as ui } from '../../components/ui';
+import { removePhotos } from '../../lib/photos';
 import { ensurePermission } from '../../lib/reminders';
 import { useStore } from '../../lib/store';
 import { useTheme } from '../../lib/theme';
@@ -13,6 +14,16 @@ export default function SettingsScreen() {
   const settings = useStore((s) => s.settings);
   const updateSettings = useStore((s) => s.updateSettings);
   const resetAll = useStore((s) => s.resetAll);
+
+  const eraseAll = () => {
+    const s = useStore.getState();
+    removePhotos([
+      ...s.assets.map((a) => a.photo),
+      ...s.logs.flatMap((l) => l.photos ?? []),
+      ...s.warranties.flatMap((w) => w.photos),
+    ]);
+    resetAll();
+  };
   const [blocked, setBlocked] = useState(false);
 
   const toggleReminders = async (on: boolean) => {
@@ -26,9 +37,9 @@ export default function SettingsScreen() {
   };
 
   const confirmReset = () =>
-    Alert.alert('Erase everything?', 'This removes every home, vehicle, task and log from this phone. It cannot be undone.', [
+    Alert.alert('Erase everything?', 'This removes every home, vehicle, task, warranty, photo and log from this phone. It cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Erase', style: 'destructive', onPress: resetAll },
+      { text: 'Erase', style: 'destructive', onPress: eraseAll },
     ]);
 
   return (
@@ -58,14 +69,14 @@ export default function SettingsScreen() {
           ))}
         </View>
         <Text style={[local.small, { color: t.sub }]}>
-          Reminders arrive at 9 AM. Mileage tasks only alert by date, so keep each vehicle's odometer current.
+          Reminders arrive at 9 AM. Warranties alert 30 days before they end. Mileage tasks only alert by date, so keep each vehicle's odometer current.
         </Text>
       </Card>
 
       <SectionTitle>Your data</SectionTitle>
       <Card style={local.gap}>
         <Text style={[ui.sub, { color: t.sub }]}>
-          Everything stays on this phone. There is no account and nothing is uploaded.
+          Everything stays on this phone, photos included. There is no account and nothing is uploaded.
         </Text>
         <Button kind="danger" label="Erase all data" onPress={confirmReset} />
       </Card>

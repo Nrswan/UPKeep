@@ -1,7 +1,16 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { addDays, addMonths, computeDue, describeInterval, diffDays, latestLog } from '../src/lib/due.ts';
+import {
+  addDays,
+  addMonths,
+  computeDue,
+  describeInterval,
+  describeMonths,
+  diffDays,
+  latestLog,
+  warrantyInfo,
+} from '../src/lib/due.ts';
 
 const home = { id: 'h', kind: 'home', name: 'House', createdAt: '2026-01-01' };
 const car = (mileage) => ({ id: 'c', kind: 'vehicle', name: 'Truck', mileage, createdAt: '2026-01-01' });
@@ -90,4 +99,26 @@ test('describeInterval reads naturally', () => {
   assert.equal(describeInterval({ everyMonths: 12 }), 'Every year');
   assert.equal(describeInterval({ everyMonths: 24 }), 'Every 2 years');
   assert.equal(describeInterval({ everyMonths: 6, everyMiles: 5000 }), 'Every 6 months or every 5,000 mi');
+});
+
+test('a warranty moves from active to ending soon to expired', () => {
+  const w = { purchasedAt: '2025-03-15', months: 24 };
+  const ok = warrantyInfo(w, '2026-11-09');
+  assert.equal(ok.expiresAt, '2027-03-15');
+  assert.equal(ok.status, 'ok');
+  assert.equal(ok.label, '4 months left');
+  const soon = warrantyInfo(w, '2027-02-20');
+  assert.equal(soon.status, 'soon');
+  assert.equal(soon.label, '23 days left');
+  assert.equal(warrantyInfo(w, '2027-03-15').label, 'Ends today');
+  assert.equal(warrantyInfo(w, '2027-03-15').status, 'soon');
+  assert.equal(warrantyInfo(w, '2027-03-16').status, 'expired');
+});
+
+test('long warranties read in years and months', () => {
+  assert.equal(warrantyInfo({ purchasedAt: '2026-11-09', months: 120 }, '2026-11-09').label, '10 yr left');
+  assert.equal(warrantyInfo({ purchasedAt: '2026-01-09', months: 36 }, '2026-11-09').label, '2 yr 2 mo left');
+  assert.equal(describeMonths(12), '1 year');
+  assert.equal(describeMonths(60), '5 years');
+  assert.equal(describeMonths(18), '18 months');
 });
