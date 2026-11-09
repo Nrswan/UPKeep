@@ -4,12 +4,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Banner, BannerStat } from '../../components/Banner';
+import { SpecFields, SpecList } from '../../components/SpecFields';
 import { TaskRow } from '../../components/TaskRow';
 import { Button, Card, Empty, Field, IconBadge, Screen, SectionTitle, styles as ui, toNumber } from '../../components/ui';
 import { applianceLook } from '../../lib/appliances';
+import { findRoom, money, projectTotals } from '../../lib/diy';
 import { todayStr } from '../../lib/due';
 import { addPhoto, photoUri, removePhotos } from '../../lib/photos';
+import { cleanSpecs, HOME_FACTS, rowsForLabels, VEHICLE_FACTS } from '../../lib/specs';
 import { useStore } from '../../lib/store';
+import type { Spec } from '../../lib/types';
 import { gradients, useTheme } from '../../lib/theme';
 import { useDueItems } from '../../lib/useDue';
 import { vehicleLabel } from '../../lib/vehicles';
@@ -20,10 +24,14 @@ export default function AssetDetail() {
   const asset = useStore((s) => s.assets.find((a) => a.id === id));
   const logs = useStore((s) => s.logs);
   const allAppliances = useStore((s) => s.appliances);
+  const allProjects = useStore((s) => s.projects);
+  const allExpenses = useStore((s) => s.expenses);
   const updateAsset = useStore((s) => s.updateAsset);
   const removeAsset = useStore((s) => s.removeAsset);
   const items = useDueItems(id);
   const [mileage, setMileage] = useState('');
+  const [editingFacts, setEditingFacts] = useState(false);
+  const [facts, setFacts] = useState<Spec[]>([]);
 
   if (!asset) {
     return (
@@ -35,6 +43,9 @@ export default function AssetDetail() {
 
   const appliances = allAppliances.filter((a) => a.assetId === asset.id);
   const general = items.filter((i) => !i.task.applianceId);
+  const projects = allProjects.filter((p) => p.assetId === asset.id);
+  const projectExpenses = allExpenses.filter((e) => projects.some((p) => p.id === e.projectId));
+  const diyTotal = projectTotals(projectExpenses).total;
   const year = todayStr().slice(0, 4);
   const mine = logs.filter((l) => l.assetId === asset.id);
   const spent = mine.filter((l) => l.doneAt.startsWith(year)).reduce((sum, l) => sum + (l.cost ?? 0), 0);
@@ -62,13 +73,20 @@ export default function AssetDetail() {
         style: 'destructive',
         onPress: () => {
           router.back();
-          removePhotos([asset.photo, ...mine.flatMap((l) => l.photos ?? []), ...appliances.flatMap((a) => a.photos)]);
+          removePhotos([
+            asset.photo,
+            ...mine.flatMap((l) => l.photos ?? []),
+            ...appliances.flatMap((a) => a.photos),
+            ...projects.flatMap((p) => p.photos),
+            ...projectExpenses.flatMap((e) => e.photos),
+          ]);
           removeAsset(asset.id);
         },
       },
     ]);
 
   const label = vehicleLabel(asset);
+  const factLabels = asset.kind === 'home' ? HOME_FACTS : VEHICLE_FACTS;
 
   return (
     <Screen>
@@ -95,6 +113,45 @@ export default function AssetDetail() {
         <Button small kind="plain" icon="camera-outline" label={asset.photo ? 'Retake photo' : 'Take photo'} onPress={() => changePhoto('camera')} />
         <Button small kind="plain" icon="images-outline" label="Choose photo" onPress={() => changePhoto('library')} />
       </View>
+
+      <Card style={local.gap}>
+        <Text style={[ui.label, { color: t.sub }]}>GOOD TO KNOW</Text>
+        {editingFacts ? (
+          <>
+            <SpecFields labels={factLabels} rows={facts} onChange={setFacts} />
+            <Button
+              label="Save"
+              onPress={() => {
+                updateAsset(asset.id, { facts: cleanSpecs(facts) });
+                setEditingFacts(false);
+              }}
+            />
+            <Button kind="plain" label="Cancel" onPress={() => setEditingFacts(false)} />
+          </>
+        ) : (
+          <>
+            {asset.facts?.length ? (
+              <SpecList specs={asset.facts} />
+            ) : (
+              <Text style={[ui.sub, { color: t.sub }]}>
+                {asset.kind === 'home'
+                  ? 'Write down where the water shutoff, gas shutoff and breaker panel are. In a leak, finding the shutoff fast is what limits the damage.'
+                  : 'Keep the plate, VIN, tire size and oil weight here so they are handy at the parts counter.'}
+              </Text>
+            )}
+            <Button
+              small
+              kind="plain"
+              icon="create-outline"
+              label={asset.facts?.length ? 'Edit' : asset.kind === 'home' ? 'Add shutoff locations and more' : 'Add vehicle details'}
+              onPress={() => {
+                setFacts(rowsForLabels(factLabels, asset.facts));
+                setEditingFacts(true);
+              }}
+            />
+          </>
+        )}
+      </Card>
 
       {asset.kind === 'vehicle' ? (
         <Card style={local.gap}>
@@ -155,6 +212,58 @@ export default function AssetDetail() {
             icon="add"
             label="Add an appliance"
             onPress={() => router.push({ pathname: '/appliance/new', params: { assetId: asset.id } })}
+          />
+        </>
+      ) : null}
+
+      {asset.kind === 'home' ? (
+        <>
+          <SectionTitle>DIY Tracker{projects.length ? `  ·  ${money(diyTotal, false)} spent` : ''}</SectionTitle>
+          {projects.length === 0 ? (
+            <Text style={[ui.sub, { color: t.sub }]}>
+              Remodeling a room? Log what you spend on floors, paint, lighting and the rest, and keep every receipt in one place.
+            </Text>
+          ) : null}
+          {projects.map((p) => {
+            const room = findRoom(p.room);
+            const mineExp = projectExpenses.filter((e) => e.projectId === p.id);
+            const spent = projectTotals(mineExp).total;
+            const detail = [
+              p.roomName ?? room.label,
+              `${mineExp.length} ${mineExp.length === 1 ? 'receipt' : 'receipts'}`,
+              p.done ? 'Finished' : null,
+            ]
+              .filter(Boolean)
+              .join('  ·  ');
+            return (
+              <Pressable
+                key={p.id}
+                accessibilityRole="button"
+                accessibilityLabel={`${p.name}. ${money(spent)} spent`}
+                onPress={() => router.push({ pathname: '/project/[id]', params: { id: p.id } })}
+              >
+                <Card style={local.appliance}>
+                  {p.photos[0] ? (
+                    <Image source={{ uri: photoUri(p.photos[0]) }} style={[local.thumb, { backgroundColor: t.muted }]} />
+                  ) : (
+                    <IconBadge name={room.icon} color="#E07B1F" size={48} />
+                  )}
+                  <View style={local.applianceMain}>
+                    <Text style={[ui.title, { color: t.text }]} numberOfLines={1}>
+                      {p.name}
+                    </Text>
+                    <Text style={[ui.sub, { color: t.sub }]}>{detail}</Text>
+                  </View>
+                  <Text style={[ui.title, { color: t.text }]}>{money(spent, false)}</Text>
+                </Card>
+              </Pressable>
+            );
+          })}
+          <Button
+            kind="plain"
+            icon="hammer-outline"
+            label="Start a project"
+            onPress={() => router.push({ pathname: '/project/new', params: { assetId: asset.id } })}
           />
         </>
       ) : null}

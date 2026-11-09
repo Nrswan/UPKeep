@@ -33,7 +33,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "node --test tests/due.test.mjs tests/specs.test.mjs",
+    "test": "node --test tests/due.test.mjs tests/specs.test.mjs tests/diy.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "private": true

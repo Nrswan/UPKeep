@@ -14,6 +14,11 @@ Home and vehicle maintenance reminders for iPhone and Android. One codebase, bui
 - Year, make and model dropdowns for vehicles. Models come live from NHTSA's free vPIC service, with type-your-own as the fallback
 - Home appliances by type: swamp cooler or refrigerated air, gas or electric range, dryer and water heater, plus more. Each type adds its own upkeep tasks and holds brand, model, serial number and photos
 - Parts and specs on any task, such as oil weight and filter number. They prefill when you log the job and each log keeps what was used
+- DIY Tracker on each home: projects by room, expenses by category such as floors, paint or vanity, receipt photos, a budget and before and after pictures
+- A plain "why it matters" note and a difficulty and time guide on every starter task, including when to call a pro
+- A "good to know" card on each home and vehicle for shutoff locations, breaker panel, tire size and similar facts
+- A getting started checklist on the dashboard for new users
+- A "Tip the developer" card in Settings. Links are set in `src/lib/tip.ts`
 - Warranties tab for things you bought: purchase date, length, price, store and a reminder 30 days before coverage ends
 - Photos from the camera or library on homes, vehicles, warranty items and service logs
 - Local reminders at 9 AM with a heads-up window you pick in Settings
@@ -35,7 +40,7 @@ Scan the QR code with the Expo Go app on your phone. Press `w` in the terminal t
 
 ```bash
 npm run typecheck   # TypeScript
-npm test            # due date, mileage, warranty and specs logic
+npm test            # due dates, warranties, specs, DIY totals and task guides
 ```
 
 ## Project layout
@@ -54,6 +59,10 @@ src/lib/
   presets.ts        starter schedules. Edit these freely
   appliances.ts     appliance types and the upkeep each one needs
   specs.ts          suggested parts and specs fields per task
+  why.ts            why each job matters
+  effort.ts         difficulty and time guide per job
+  diy.ts            DIY rooms, categories and totals
+  tip.ts            developer name and tip links
   store.ts          app data, saved to the phone with AsyncStorage
   reminders.ts      local notification scheduling
   theme.ts          colors
@@ -76,6 +85,10 @@ npx eas-cli@latest submit --platform all
 
 5. Set the price in App Store Connect and Play Console. A paid download needs no purchase code in the app.
 6. Both stores ask for a privacy policy URL. This app collects nothing, so the policy can be short.
+
+## Tip links
+
+`src/lib/tip.ts` holds the developer name and an empty list of tip links. Check the current App Store and Google Play payment rules before adding outside links such as Venmo or PayPal. Apple has rejected apps for outside tip links and expects developer tips to go through in-app purchase.
 
 ## Known limits
 

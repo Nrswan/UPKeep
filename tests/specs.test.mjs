@@ -13,6 +13,7 @@ test('specific filter tasks win over the general filter rule', () => {
   assert.deepEqual(suggestedSpecLabels('Replace furnace filter'), ['Filter size', 'Filter rating']);
   assert.deepEqual(suggestedSpecLabels('Replace cooler pads'), ['Pad size', 'Number of pads']);
   assert.deepEqual(suggestedSpecLabels('Clean gutters'), []);
+  assert.deepEqual(suggestedSpecLabels('Clean refrigerator coils'), []);
 });
 
 test('rows show suggestions filled from saved values, then custom fields', () => {

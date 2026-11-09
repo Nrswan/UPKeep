@@ -13,15 +13,33 @@ const HINTS: Record<string, string> = {
   'Filter size': '20x25x1',
   'Filter rating': 'MERV 8',
   'Tire size': '245/75R16',
+  'Main water shutoff': 'Front yard by the hose bib',
+  'Gas shutoff': 'At the meter on the east wall',
+  'Breaker panel': 'Garage, left of the door',
+  'Furnace filter size': '20x25x1',
+  'Paint colors': 'Living room: brand, color name and sheen',
+  'Tire pressure': '35 psi front and rear',
 };
 
 /**
  * Editable list of parts and specs. Suggested fields for the task keep a fixed
  * label. Fields the user adds get an editable label.
  */
-export function SpecFields({ title, rows, onChange }: { title: string; rows: Spec[]; onChange: (rows: Spec[]) => void }) {
+export function SpecFields({
+  title = '',
+  labels,
+  rows,
+  onChange,
+}: {
+  /** Task title used to pick the suggested fields. */
+  title?: string;
+  /** Or an explicit list of suggested fields. */
+  labels?: string[];
+  rows: Spec[];
+  onChange: (rows: Spec[]) => void;
+}) {
   const t = useTheme();
-  const fixed = new Set(suggestedSpecLabels(title).map((l) => l.toLowerCase()));
+  const fixed = new Set((labels ?? suggestedSpecLabels(title)).map((l) => l.toLowerCase()));
   const set = (i: number, patch: Partial<Spec>) => onChange(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   const input = [ui.input, { color: t.text, backgroundColor: t.card, borderColor: t.line }];
 
@@ -37,7 +55,7 @@ export function SpecFields({ title, rows, onChange }: { title: string; rows: Spe
               <TextInput
                 value={r.label}
                 onChangeText={(v) => set(i, { label: v })}
-                placeholder="What is it? (Drain plug gasket)"
+                placeholder="Name this field"
                 placeholderTextColor={t.sub}
                 accessibilityLabel="Field name"
                 style={[input, local.customLabel]}

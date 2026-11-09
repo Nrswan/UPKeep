@@ -6,7 +6,7 @@ import type { Spec } from './types';
  * filter number, pad size. Users can add their own fields too.
  */
 const RULES: [RegExp, string[]][] = [
-  [/oil/i, ['Oil weight', 'Oil type', 'Oil capacity', 'Oil filter']],
+  [/\boil\b/i, ['Oil weight', 'Oil type', 'Oil capacity', 'Oil filter']],
   [/tire pressure/i, ['Front pressure (psi)', 'Rear pressure (psi)']],
   [/tire/i, ['Tire size', 'Lug nut torque']],
   [/cooler pad/i, ['Pad size', 'Number of pads']],
@@ -35,8 +35,12 @@ export function suggestedSpecLabels(title: string): string[] {
 
 /** Suggested fields first, filled from what is saved, then any extra saved fields. */
 export function specRows(title: string, saved: Spec[] = []): Spec[] {
+  return rowsForLabels(suggestedSpecLabels(title), saved);
+}
+
+/** Same as specRows, for a fixed list of labels instead of a task title. */
+export function rowsForLabels(suggested: string[], saved: Spec[] = []): Spec[] {
   const byLabel = new Map(saved.map((s) => [s.label.toLowerCase(), s.value]));
-  const suggested = suggestedSpecLabels(title);
   const rows: Spec[] = suggested.map((label) => ({ label, value: byLabel.get(label.toLowerCase()) ?? '' }));
   const known = new Set(suggested.map((l) => l.toLowerCase()));
   for (const s of saved) if (!known.has(s.label.toLowerCase())) rows.push({ ...s });
@@ -49,3 +53,7 @@ export function cleanSpecs(rows: Spec[]): Spec[] {
     .map((r) => ({ label: r.label.trim(), value: r.value.trim() }))
     .filter((r) => r.label && r.value);
 }
+
+/** Things worth writing down once about a home or a vehicle. */
+export const HOME_FACTS = ['Main water shutoff', 'Gas shutoff', 'Breaker panel', 'Water heater location', 'Furnace filter size', 'Paint colors'];
+export const VEHICLE_FACTS = ['License plate', 'VIN', 'Tire size', 'Tire pressure', 'Oil weight', 'Insurance policy'];

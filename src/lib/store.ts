@@ -5,7 +5,18 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { todayStr } from './due';
 import type { Preset } from './presets';
 import { findOption } from './appliances';
-import type { Appliance, Asset, AssetKind, LogEntry, Settings, Spec, Task, WarrantyItem } from './types';
+import type {
+  Appliance,
+  Asset,
+  AssetKind,
+  Expense,
+  LogEntry,
+  Project,
+  Settings,
+  Spec,
+  Task,
+  WarrantyItem,
+} from './types';
 
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
@@ -38,6 +49,8 @@ type State = {
   logs: LogEntry[];
   warranties: WarrantyItem[];
   appliances: Appliance[];
+  projects: Project[];
+  expenses: Expense[];
   settings: Settings;
   hydrated: boolean;
 
@@ -53,7 +66,7 @@ type State = {
     /** Homes only. Each one is created along with its upkeep tasks. */
     appliances?: { category: string; option: string }[];
   }) => string;
-  updateAsset: (id: string, patch: Partial<Pick<Asset, 'name' | 'mileage' | 'photo' | 'year' | 'make' | 'model'>>) => void;
+  updateAsset: (id: string, patch: Partial<Pick<Asset, 'name' | 'mileage' | 'photo' | 'year' | 'make' | 'model' | 'facts'>>) => void;
   removeAsset: (id: string) => void;
 
   addTask: (input: Omit<Task, 'id' | 'startAt' | 'startMiles'>) => string;
@@ -75,6 +88,13 @@ type State = {
   updateWarranty: (id: string, patch: Partial<Omit<WarrantyItem, 'id'>>) => void;
   removeWarranty: (id: string) => void;
 
+  addProject: (input: Omit<Project, 'id' | 'startedAt' | 'photos'>) => string;
+  updateProject: (id: string, patch: Partial<Omit<Project, 'id' | 'assetId'>>) => void;
+  removeProject: (id: string) => void;
+  addExpense: (input: Omit<Expense, 'id'>) => string;
+  updateExpense: (id: string, patch: Partial<Omit<Expense, 'id' | 'projectId'>>) => void;
+  removeExpense: (id: string) => void;
+
   updateSettings: (patch: Partial<Settings>) => void;
   resetAll: () => void;
 };
@@ -85,6 +105,8 @@ const defaults = {
   logs: [] as LogEntry[],
   warranties: [] as WarrantyItem[],
   appliances: [] as Appliance[],
+  projects: [] as Project[],
+  expenses: [] as Expense[],
   settings: { remindersOn: true, leadDays: 7 } as Settings,
 };
 
@@ -129,6 +151,8 @@ export const useStore = create<State>()(
           tasks: s.tasks.filter((t) => t.assetId !== id),
           logs: s.logs.filter((l) => l.assetId !== id),
           appliances: s.appliances.filter((a) => a.assetId !== id),
+          projects: s.projects.filter((p) => p.assetId !== id),
+          expenses: s.expenses.filter((e) => !s.projects.some((p) => p.assetId === id && p.id === e.projectId)),
         })),
 
       addTask: (input) => {
@@ -209,6 +233,32 @@ export const useStore = create<State>()(
 
       removeWarranty: (id) => set((s) => ({ warranties: s.warranties.filter((w) => w.id !== id) })),
 
+      addProject: (input) => {
+        const id = newId();
+        set((s) => ({ projects: [...s.projects, { ...input, id, startedAt: todayStr(), photos: [] }] }));
+        return id;
+      },
+
+      updateProject: (id, patch) =>
+        set((s) => ({ projects: s.projects.map((p) => (p.id === id ? { ...p, ...patch } : p)) })),
+
+      removeProject: (id) =>
+        set((s) => ({
+          projects: s.projects.filter((p) => p.id !== id),
+          expenses: s.expenses.filter((e) => e.projectId !== id),
+        })),
+
+      addExpense: (input) => {
+        const id = newId();
+        set((s) => ({ expenses: [...s.expenses, { ...input, id }] }));
+        return id;
+      },
+
+      updateExpense: (id, patch) =>
+        set((s) => ({ expenses: s.expenses.map((e) => (e.id === id ? { ...e, ...patch } : e)) })),
+
+      removeExpense: (id) => set((s) => ({ expenses: s.expenses.filter((e) => e.id !== id) })),
+
       updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
 
       resetAll: () => set({ ...defaults }),
@@ -217,12 +267,14 @@ export const useStore = create<State>()(
       name: 'upkeep-v1',
       version: 1,
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: ({ assets, tasks, logs, warranties, appliances, settings }) => ({
+      partialize: ({ assets, tasks, logs, warranties, appliances, projects, expenses, settings }) => ({
         assets,
         tasks,
         logs,
         warranties,
         appliances,
+        projects,
+        expenses,
         settings,
       }),
       onRehydrateStorage: () => () => {

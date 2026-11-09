@@ -12,6 +12,8 @@ import { removePhotos } from '../../lib/photos';
 import { cleanSpecs, specRows, suggestedSpecLabels } from '../../lib/specs';
 import { useStore } from '../../lib/store';
 import { useTheme } from '../../lib/theme';
+import { effortFor, effortLabel } from '../../lib/effort';
+import { whyItMatters } from '../../lib/why';
 import type { Spec } from '../../lib/types';
 
 export default function TaskDetail() {
@@ -51,6 +53,8 @@ export default function TaskDetail() {
   const isVehicle = asset.kind === 'vehicle';
   const saved = task.specs ?? [];
   const suggested = suggestedSpecLabels(task.title);
+  const why = whyItMatters(task.title);
+  const effort = effortFor(task.title);
 
   const openLog = () => {
     setDoneAt(todayStr());
@@ -95,11 +99,31 @@ export default function TaskDetail() {
         <Text style={[local.heading, { color: t.text }]}>{task.title}</Text>
         <StatusPill status={due.status} label={due.label} />
         <Text style={[ui.sub, { color: t.sub }]}>{describeInterval(task)}</Text>
+        {effort ? (
+          <View style={local.effort}>
+            <Ionicons
+              name={effort.level === 'pro' ? 'call-outline' : 'hammer-outline'}
+              size={16}
+              color={effort.level === 'pro' ? t.purple : t.primary}
+            />
+            <Text style={[local.effortText, { color: effort.level === 'pro' ? t.purple : t.primary }]}>{effortLabel(effort)}</Text>
+          </View>
+        ) : null}
+        {effort?.tip ? <Text style={[ui.sub, { color: t.sub }]}>{effort.tip}</Text> : null}
         {due.dueDate ? <Text style={[ui.sub, { color: t.sub }]}>Next by date: {formatDate(due.dueDate)}</Text> : null}
         {due.dueMiles != null ? (
           <Text style={[ui.sub, { color: t.sub }]}>Next by mileage: {due.dueMiles.toLocaleString()} mi</Text>
         ) : null}
         {task.note ? <Text style={[ui.sub, { color: t.text }]}>{task.note}</Text> : null}
+        {why ? (
+          <View style={[local.why, { backgroundColor: t.warnBg }]}>
+            <Ionicons name="bulb-outline" size={20} color={t.warn} />
+            <View style={local.whyText}>
+              <Text style={[local.whyTitle, { color: t.warn }]}>Why it matters</Text>
+              <Text style={[local.whyBody, { color: t.text }]}>{why}</Text>
+            </View>
+          </View>
+        ) : null}
       </Card>
 
       {mode !== 'specs' && mode !== 'log' ? (
@@ -228,6 +252,12 @@ export default function TaskDetail() {
 const local = StyleSheet.create({
   gap: { gap: 10 },
   heading: { fontSize: 22, fontWeight: '800' },
+  effort: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  effortText: { fontSize: 14, fontWeight: '700' },
   log: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   logMain: { flex: 1, gap: 2 },
+  why: { flexDirection: 'row', gap: 10, borderRadius: 12, padding: 12, marginTop: 4 },
+  whyText: { flex: 1, gap: 2 },
+  whyTitle: { fontSize: 13, fontWeight: '700' },
+  whyBody: { fontSize: 14, lineHeight: 20 },
 });

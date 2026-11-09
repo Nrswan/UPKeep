@@ -11,6 +11,8 @@ export type Asset = {
   model?: string;
   /** File name of a photo saved by lib/photos.ts. */
   photo?: string;
+  /** Handy facts, such as where the water shutoff is or the tire size. */
+  facts?: Spec[];
   /** Local date (YYYY-MM-DD) the asset was added. */
   createdAt: string;
 };
@@ -91,6 +93,8 @@ export type Settings = {
   remindersOn: boolean;
   /** Remind this many days before a task is due. */
   leadDays: number;
+  /** True once the user closes the getting started checklist. */
+  hideStart?: boolean;
 };
 
 export type DueStatus = 'overdue' | 'soon' | 'unlogged' | 'ok';
@@ -104,4 +108,36 @@ export type DueInfo = {
   label: string;
   /** Lower sorts first. */
   rank: number;
+};
+
+/** A DIY job on a home, such as a bathroom remodel. */
+export type Project = {
+  id: string;
+  assetId: string;
+  name: string;
+  /** Key into lib/diy.ts ROOMS, or "other". */
+  room: string;
+  /** Shown instead of the room label when the room is a custom one. */
+  roomName?: string;
+  budget?: number;
+  /** Local date (YYYY-MM-DD) the project was added. */
+  startedAt: string;
+  done?: boolean;
+  note?: string;
+  /** Before, during and after pictures. */
+  photos: string[];
+};
+
+/** One purchase on a project. */
+export type Expense = {
+  id: string;
+  projectId: string;
+  category: string;
+  amount: number;
+  description?: string;
+  store?: string;
+  /** Local date (YYYY-MM-DD) of the purchase. */
+  date: string;
+  /** Receipt pictures. */
+  photos: string[];
 };

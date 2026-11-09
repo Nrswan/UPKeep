@@ -11,7 +11,7 @@ const RULES: [RegExp, IconName, string][] = [
   [/softener/i, 'water-opacity', '#4338CA'],
   [/condenser|\bAC\b|mini split|heat pump/i, 'air-conditioner', '#0E7490'],
   [/leak|sink/i, 'pipe', '#0369A1'],
-  [/oil/i, 'oil', '#C2410C'],
+  [/\boil\b/i, 'oil', '#C2410C'],
   [/tire pressure/i, 'car-tire-alert', '#475569'],
   [/tire/i, 'tire', '#475569'],
   [/cabin|hvac|air filter|furnace filter/i, 'air-filter', '#0E7490'],
