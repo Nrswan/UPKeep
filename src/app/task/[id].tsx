@@ -4,12 +4,15 @@ import { useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PhotoStrip } from '../../components/PhotoStrip';
+import { SpecFields, SpecList } from '../../components/SpecFields';
 import { TaskForm } from '../../components/TaskForm';
 import { Button, Card, DateStepper, Empty, Field, Screen, SectionTitle, StatusPill, styles as ui, toNumber } from '../../components/ui';
 import { computeDue, describeInterval, formatDate, latestLog, todayStr } from '../../lib/due';
 import { removePhotos } from '../../lib/photos';
+import { cleanSpecs, specRows, suggestedSpecLabels } from '../../lib/specs';
 import { useStore } from '../../lib/store';
 import { useTheme } from '../../lib/theme';
+import type { Spec } from '../../lib/types';
 
 export default function TaskDetail() {
   const t = useTheme();
@@ -23,12 +26,13 @@ export default function TaskDetail() {
   const updateTask = useStore((s) => s.updateTask);
   const removeTask = useStore((s) => s.removeTask);
 
-  const [mode, setMode] = useState<'view' | 'log' | 'edit'>('view');
+  const [mode, setMode] = useState<'view' | 'log' | 'edit' | 'specs'>('view');
   const [doneAt, setDoneAt] = useState(todayStr());
   const [miles, setMiles] = useState('');
   const [cost, setCost] = useState('');
   const [note, setNote] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
+  const [specs, setSpecs] = useState<Spec[]>([]);
 
   const history = useMemo(
     () => allLogs.filter((l) => l.taskId === id).sort((a, b) => (a.doneAt < b.doneAt ? 1 : -1)),
@@ -45,6 +49,8 @@ export default function TaskDetail() {
 
   const due = computeDue(task, latestLog(allLogs, task.id), asset, todayStr(), leadDays);
   const isVehicle = asset.kind === 'vehicle';
+  const saved = task.specs ?? [];
+  const suggested = suggestedSpecLabels(task.title);
 
   const openLog = () => {
     setDoneAt(todayStr());
@@ -52,12 +58,18 @@ export default function TaskDetail() {
     setCost('');
     setNote('');
     setPhotos([]);
+    setSpecs(specRows(task.title, task.specs));
     setMode('log');
   };
 
   const saveLog = () => {
     const m = toNumber(miles);
-    logDone(task.id, { doneAt, miles: isVehicle && m != null ? Math.round(m) : undefined, cost: toNumber(cost), note, photos });
+    logDone(task.id, { doneAt, miles: isVehicle && m != null ? Math.round(m) : undefined, cost: toNumber(cost),
+      note,
+      photos,
+      // Only touch saved specs when the form showed some.
+      specs: specs.length ? cleanSpecs(specs) : undefined,
+    });
     setMode('view');
   };
 
@@ -90,6 +102,46 @@ export default function TaskDetail() {
         {task.note ? <Text style={[ui.sub, { color: t.text }]}>{task.note}</Text> : null}
       </Card>
 
+      {mode !== 'specs' && mode !== 'log' ? (
+        <Card style={local.gap}>
+          <Text style={[ui.label, { color: t.sub }]}>PARTS AND SPECS</Text>
+          {saved.length ? (
+            <SpecList specs={saved} />
+          ) : (
+            <Text style={[ui.sub, { color: t.sub }]}>
+              {suggested.length
+                ? `Save the ${suggested.slice(0, 3).join(', ').toLowerCase()} and more so you know what to buy next time.`
+                : 'Save part numbers, sizes or anything else you need to remember for this job.'}
+            </Text>
+          )}
+          <Button
+            small
+            kind="plain"
+            icon="create-outline"
+            label={saved.length ? 'Edit parts and specs' : 'Add parts and specs'}
+            onPress={() => {
+              setSpecs(specRows(task.title, task.specs));
+              setMode('specs');
+            }}
+          />
+        </Card>
+      ) : null}
+
+      {mode === 'specs' ? (
+        <Card style={local.gap}>
+          <Text style={[ui.label, { color: t.sub }]}>PARTS AND SPECS</Text>
+          <SpecFields title={task.title} rows={specs} onChange={setSpecs} />
+          <Button
+            label="Save"
+            onPress={() => {
+              updateTask(task.id, { specs: cleanSpecs(specs) });
+              setMode('view');
+            }}
+          />
+          <Button kind="plain" label="Cancel" onPress={() => setMode('view')} />
+        </Card>
+      ) : null}
+
       {mode === 'view' ? (
         <>
           <Button label="Mark done" icon="checkmark" onPress={openLog} />
@@ -105,6 +157,8 @@ export default function TaskDetail() {
           ) : null}
           <Field label="Cost (optional)" value={cost} onChangeText={setCost} keyboardType="decimal-pad" placeholder="0.00" />
           <Field label="Note (optional)" value={note} onChangeText={setNote} placeholder="Parts used, shop, anything worth remembering" />
+          <Text style={[ui.label, { color: t.sub }]}>WHAT YOU USED</Text>
+          <SpecFields title={task.title} rows={specs} onChange={setSpecs} />
           <PhotoStrip label="Photos of the receipt or work (optional)" photos={photos} onChange={setPhotos} />
           <Button label="Save" onPress={saveLog} />
           <Button
@@ -149,6 +203,9 @@ export default function TaskDetail() {
                 .filter(Boolean)
                 .join('  ·  ') || 'Done'}
             </Text>
+            {l.specs?.length ? (
+              <Text style={[ui.sub, { color: t.sub }]}>{l.specs.map((x) => `${x.label}: ${x.value}`).join('  ·  ')}</Text>
+            ) : null}
             <PhotoStrip photos={l.photos ?? []} size={64} />
           </View>
           <Pressable

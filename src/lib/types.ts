@@ -15,9 +15,31 @@ export type Asset = {
   createdAt: string;
 };
 
+/** One saved detail about a job, such as "Oil weight: 5W-30". */
+export type Spec = { label: string; value: string };
+
+/** Something in a home that needs its own upkeep: a swamp cooler, a gas range. */
+export type Appliance = {
+  id: string;
+  assetId: string;
+  /** Keys into lib/appliances.ts. Custom appliances use "other". */
+  category: string;
+  option: string;
+  name: string;
+  brand?: string;
+  model?: string;
+  serial?: string;
+  note?: string;
+  photos: string[];
+};
+
 export type Task = {
   id: string;
   assetId: string;
+  /** Set when the task belongs to one appliance in a home. */
+  applianceId?: string;
+  /** Parts and specs to remember for next time. */
+  specs?: Spec[];
   title: string;
   note?: string;
   /** Repeat every N months. */
@@ -39,6 +61,8 @@ export type LogEntry = {
   cost?: number;
   note?: string;
   photos?: string[];
+  /** What was used this time. */
+  specs?: Spec[];
 };
 
 /** Something you bought that carries a warranty: an appliance, a roof, a tool. */

@@ -12,6 +12,8 @@ Home and vehicle maintenance reminders for iPhone and Android. One codebase, bui
 - One tap to mark a task done, or open it to log a past date, mileage, cost and a note
 - History per task and money spent this year per home or vehicle
 - Year, make and model dropdowns for vehicles. Models come live from NHTSA's free vPIC service, with type-your-own as the fallback
+- Home appliances by type: swamp cooler or refrigerated air, gas or electric range, dryer and water heater, plus more. Each type adds its own upkeep tasks and holds brand, model, serial number and photos
+- Parts and specs on any task, such as oil weight and filter number. They prefill when you log the job and each log keeps what was used
 - Warranties tab for things you bought: purchase date, length, price, store and a reminder 30 days before coverage ends
 - Photos from the camera or library on homes, vehicles, warranty items and service logs
 - Local reminders at 9 AM with a heads-up window you pick in Settings
@@ -33,7 +35,7 @@ Scan the QR code with the Expo Go app on your phone. Press `w` in the terminal t
 
 ```bash
 npm run typecheck   # TypeScript
-npm test            # due date and mileage logic
+npm test            # due date, mileage, warranty and specs logic
 ```
 
 ## Project layout
@@ -50,6 +52,8 @@ src/lib/
   vehicles.ts       year and make lists, live model lookup
   taskIcon.ts       icon and color for each kind of task
   presets.ts        starter schedules. Edit these freely
+  appliances.ts     appliance types and the upkeep each one needs
+  specs.ts          suggested parts and specs fields per task
   store.ts          app data, saved to the phone with AsyncStorage
   reminders.ts      local notification scheduling
   theme.ts          colors

@@ -86,7 +86,7 @@ export default function DueScreen() {
             ) : null}
           </View>
         )}
-        renderItem={({ item }) => <TaskRow task={item.task} due={item.due} kind={item.asset.kind} assetName={item.asset.name} />}
+        renderItem={({ item }) => <TaskRow task={item.task} due={item.due} kind={item.asset.kind} assetName={item.appliance ? `${item.asset.name}  ·  ${item.appliance.name}` : item.asset.name} />}
         ListEmptyComponent={<Empty icon="list-outline" title="No tasks" body="Add tasks from the My stuff tab." />}
       />
     </Screen>

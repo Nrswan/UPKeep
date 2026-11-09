@@ -5,7 +5,7 @@ import { Empty, Screen } from '../../components/ui';
 import { useStore } from '../../lib/store';
 
 export default function NewTask() {
-  const { assetId } = useLocalSearchParams<{ assetId: string }>();
+  const { assetId, applianceId } = useLocalSearchParams<{ assetId: string; applianceId?: string }>();
   const asset = useStore((s) => s.assets.find((a) => a.id === assetId));
   const addTask = useStore((s) => s.addTask);
 
@@ -23,7 +23,7 @@ export default function NewTask() {
         kind={asset.kind}
         submitLabel="Add task"
         onSubmit={(v) => {
-          addTask({ ...v, assetId: asset.id });
+          addTask({ ...v, assetId: asset.id, applianceId: applianceId || undefined });
           router.back();
         }}
       />

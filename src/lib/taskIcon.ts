@@ -5,10 +5,17 @@ export type TaskIcon = { name: IconName; color: string };
 
 /** First keyword found in the task title wins, so more specific words go first. */
 const RULES: [RegExp, IconName, string][] = [
+  [/swamp|cooler pad/i, 'snowflake', '#0E7490'],
+  [/dishwasher/i, 'dishwasher', '#1D4ED8'],
+  [/washer/i, 'washing-machine', '#0F766E'],
+  [/softener/i, 'water-opacity', '#4338CA'],
+  [/condenser|\bAC\b|mini split|heat pump/i, 'air-conditioner', '#0E7490'],
+  [/leak|sink/i, 'pipe', '#0369A1'],
   [/oil/i, 'oil', '#C2410C'],
   [/tire pressure/i, 'car-tire-alert', '#475569'],
   [/tire/i, 'tire', '#475569'],
-  [/cabin|hvac|air filter|furnace/i, 'air-filter', '#0E7490'],
+  [/cabin|hvac|air filter|furnace filter/i, 'air-filter', '#0E7490'],
+  [/furnace/i, 'fire', '#C2410C'],
   [/brake fluid/i, 'car-brake-fluid-level', '#B91C1C'],
   [/brake/i, 'car-brake-alert', '#B91C1C'],
   [/wiper/i, 'wiper', '#1D4ED8'],

@@ -14,19 +14,15 @@ export type Preset = {
  * Every interval can be changed in the app.
  */
 export const PRESETS: Record<AssetKind, Preset[]> = {
+  // Appliance upkeep is not here. It comes from lib/appliances.ts based on what the home has.
   home: [
-    { title: 'Replace HVAC air filter', everyMonths: 3 },
     { title: 'Test smoke and CO alarms', everyMonths: 1 },
     { title: 'Replace smoke alarm batteries', everyMonths: 12 },
     { title: 'Clean gutters', everyMonths: 6 },
-    { title: 'Flush water heater', everyMonths: 12 },
-    { title: 'Clean dryer vent', everyMonths: 12 },
-    { title: 'Service heating and cooling', everyMonths: 12 },
-    { title: 'Clean refrigerator coils', everyMonths: 12 },
-    { title: 'Clean range hood filter', everyMonths: 6 },
     { title: 'Check fire extinguisher', everyMonths: 12 },
     { title: 'Inspect roof', everyMonths: 12 },
     { title: 'Check caulk around tubs and windows', everyMonths: 12 },
+    { title: 'Check under sinks for leaks', everyMonths: 6 },
   ],
   vehicle: [
     { title: 'Oil and filter change', everyMonths: 6, everyMiles: 5000, engine: true },

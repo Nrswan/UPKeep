@@ -21,6 +21,7 @@ export default function SettingsScreen() {
       ...s.assets.map((a) => a.photo),
       ...s.logs.flatMap((l) => l.photos ?? []),
       ...s.warranties.flatMap((w) => w.photos),
+      ...s.appliances.flatMap((a) => a.photos),
     ]);
     resetAll();
   };
@@ -37,7 +38,7 @@ export default function SettingsScreen() {
   };
 
   const confirmReset = () =>
-    Alert.alert('Erase everything?', 'This removes every home, vehicle, task, warranty, photo and log from this phone. It cannot be undone.', [
+    Alert.alert('Erase everything?', 'This removes every home, vehicle, appliance, task, warranty, photo and log from this phone. It cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Erase', style: 'destructive', onPress: eraseAll },
     ]);

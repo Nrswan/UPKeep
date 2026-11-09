@@ -1,12 +1,14 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Banner, BannerStat } from '../../components/Banner';
 import { TaskRow } from '../../components/TaskRow';
-import { Button, Card, Empty, Field, Screen, SectionTitle, styles as ui, toNumber } from '../../components/ui';
+import { Button, Card, Empty, Field, IconBadge, Screen, SectionTitle, styles as ui, toNumber } from '../../components/ui';
+import { applianceLook } from '../../lib/appliances';
 import { todayStr } from '../../lib/due';
-import { addPhoto, removePhotos } from '../../lib/photos';
+import { addPhoto, photoUri, removePhotos } from '../../lib/photos';
 import { useStore } from '../../lib/store';
 import { gradients, useTheme } from '../../lib/theme';
 import { useDueItems } from '../../lib/useDue';
@@ -17,6 +19,7 @@ export default function AssetDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const asset = useStore((s) => s.assets.find((a) => a.id === id));
   const logs = useStore((s) => s.logs);
+  const allAppliances = useStore((s) => s.appliances);
   const updateAsset = useStore((s) => s.updateAsset);
   const removeAsset = useStore((s) => s.removeAsset);
   const items = useDueItems(id);
@@ -30,6 +33,8 @@ export default function AssetDetail() {
     );
   }
 
+  const appliances = allAppliances.filter((a) => a.assetId === asset.id);
+  const general = items.filter((i) => !i.task.applianceId);
   const year = todayStr().slice(0, 4);
   const mine = logs.filter((l) => l.assetId === asset.id);
   const spent = mine.filter((l) => l.doneAt.startsWith(year)).reduce((sum, l) => sum + (l.cost ?? 0), 0);
@@ -57,7 +62,7 @@ export default function AssetDetail() {
         style: 'destructive',
         onPress: () => {
           router.back();
-          removePhotos([asset.photo, ...mine.flatMap((l) => l.photos ?? [])]);
+          removePhotos([asset.photo, ...mine.flatMap((l) => l.photos ?? []), ...appliances.flatMap((a) => a.photos)]);
           removeAsset(asset.id);
         },
       },
@@ -104,9 +109,59 @@ export default function AssetDetail() {
         </Card>
       ) : null}
 
-      <SectionTitle>Tasks</SectionTitle>
-      {items.length === 0 ? <Text style={[ui.sub, { color: t.sub }]}>No tasks yet.</Text> : null}
-      {items.map((i) => (
+      {asset.kind === 'home' ? (
+        <>
+          <SectionTitle>Appliances ({appliances.length})</SectionTitle>
+          {appliances.length === 0 ? (
+            <Text style={[ui.sub, { color: t.sub }]}>
+              Add what the home has, like a swamp cooler or a gas range, and the right upkeep is added for each one.
+            </Text>
+          ) : null}
+          {appliances.map((a) => {
+            const look = applianceLook(a.category);
+            const theirs = items.filter((i) => i.task.applianceId === a.id);
+            const overdue = theirs.filter((i) => i.due.status === 'overdue').length;
+            const soon = theirs.filter((i) => i.due.status === 'soon').length;
+            const summary =
+              overdue > 0 ? `${overdue} overdue` : soon > 0 ? `${soon} due soon` : `${theirs.length} ${theirs.length === 1 ? 'task' : 'tasks'}`;
+            return (
+              <Pressable
+                key={a.id}
+                accessibilityRole="button"
+                accessibilityLabel={`${a.name}. ${summary}`}
+                onPress={() => router.push({ pathname: '/appliance/[id]', params: { id: a.id } })}
+              >
+                <Card style={local.appliance}>
+                  {a.photos[0] ? (
+                    <Image source={{ uri: photoUri(a.photos[0]) }} style={[local.thumb, { backgroundColor: t.muted }]} />
+                  ) : (
+                    <IconBadge name={look.icon} color={look.color} size={48} />
+                  )}
+                  <View style={local.applianceMain}>
+                    <Text style={[ui.title, { color: t.text }]} numberOfLines={1}>
+                      {a.name}
+                    </Text>
+                    <Text style={[ui.sub, { color: overdue > 0 ? t.danger : soon > 0 ? t.warn : t.sub }]}>
+                      {[summary, [a.brand, a.model].filter(Boolean).join(' ')].filter(Boolean).join('  ·  ')}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={t.sub} />
+                </Card>
+              </Pressable>
+            );
+          })}
+          <Button
+            kind="plain"
+            icon="add"
+            label="Add an appliance"
+            onPress={() => router.push({ pathname: '/appliance/new', params: { assetId: asset.id } })}
+          />
+        </>
+      ) : null}
+
+      <SectionTitle>{asset.kind === 'home' ? `House tasks (${general.length})` : 'Tasks'}</SectionTitle>
+      {general.length === 0 ? <Text style={[ui.sub, { color: t.sub }]}>No tasks yet.</Text> : null}
+      {general.map((i) => (
         <TaskRow key={i.task.id} task={i.task} due={i.due} kind={asset.kind} />
       ))}
 
@@ -124,4 +179,7 @@ export default function AssetDetail() {
 const local = StyleSheet.create({
   stats: { flexDirection: 'row', gap: 8, marginTop: 10 },
   gap: { gap: 10 },
+  appliance: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  applianceMain: { flex: 1, gap: 2 },
+  thumb: { width: 48, height: 48, borderRadius: 12 },
 });

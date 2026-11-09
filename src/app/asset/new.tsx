@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { type ApplianceChoices, AppliancePicker, chosenAppliances, countApplianceTasks } from '../../components/AppliancePicker';
 import { PhotoStrip } from '../../components/PhotoStrip';
 import { Select } from '../../components/Select';
 import { Button, Card, Field, Screen, SectionTitle, styles as ui, toNumber } from '../../components/ui';
@@ -30,6 +31,7 @@ export default function NewAsset() {
   const [models, setModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [appliances, setAppliances] = useState<ApplianceChoices>({});
   // Presets the user switched by hand. Anything not in here follows the default.
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
 
@@ -73,6 +75,7 @@ export default function NewAsset() {
       model: model || undefined,
       photo: photos[0],
       presets: picked,
+      appliances: kind === 'home' ? chosenAppliances(appliances) : undefined,
     });
     // Ask for notification permission at the moment it makes sense to the user.
     if (remindersOn) {
@@ -157,7 +160,23 @@ export default function NewAsset() {
 
       <PhotoStrip label="Photo (optional)" photos={photos} onChange={(p) => setPhotos(p.slice(-1))} />
 
-      <SectionTitle>Starter schedule ({picked.length})</SectionTitle>
+      {kind === 'home' ? (
+        <>
+          <SectionTitle>What is in your home?</SectionTitle>
+          <Text style={[ui.sub, { color: t.sub }]}>
+            Pick the type you have and the right upkeep is added. Skip any you do not have. You can add more later with photos and
+            model numbers.
+          </Text>
+          <AppliancePicker value={appliances} onChange={setAppliances} />
+          {countApplianceTasks(appliances) > 0 ? (
+            <Text style={[ui.sub, { color: t.primary }]}>
+              {countApplianceTasks(appliances)} appliance {countApplianceTasks(appliances) === 1 ? 'task' : 'tasks'} will be added.
+            </Text>
+          ) : null}
+        </>
+      ) : null}
+
+      <SectionTitle>{kind === 'home' ? 'House tasks' : 'Starter schedule'} ({picked.length})</SectionTitle>
       <Text style={[ui.sub, { color: t.sub }]}>
         {kind === 'vehicle'
           ? 'A general schedule, not the factory one for this model. Turn off what does not apply and set intervals from your owner\'s manual.'
