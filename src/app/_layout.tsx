@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { DisclaimerGate } from '../components/DisclaimerGate';
 import { setupNotifications, syncReminders } from '../lib/reminders';
 import { useStore } from '../lib/store';
 import { useTheme } from '../lib/theme';
@@ -25,7 +26,7 @@ export default function RootLayout() {
   if (!hydrated) return null;
 
   return (
-    <>
+    <DisclaimerGate>
       <StatusBar style="auto" />
       <Stack
         screenOptions={{
@@ -45,9 +46,10 @@ export default function RootLayout() {
         <Stack.Screen name="appliance/[id]" options={{ title: '' }} />
         <Stack.Screen name="project/new" options={{ title: 'Start a project', presentation: 'modal' }} />
         <Stack.Screen name="project/[id]" options={{ title: '' }} />
+        <Stack.Screen name="disclaimer" options={{ title: 'Safety and disclaimer' }} />
         <Stack.Screen name="warranty/new" options={{ title: 'Add a warranty', presentation: 'modal' }} />
         <Stack.Screen name="warranty/[id]" options={{ title: 'Warranty' }} />
       </Stack>
-    </>
+    </DisclaimerGate>
   );
 }

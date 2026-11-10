@@ -18,6 +18,7 @@ Home and vehicle maintenance reminders for iPhone and Android. One codebase, bui
 - A plain "why it matters" note and a difficulty and time guide on every starter task, including when to call a pro
 - A "good to know" card on each home and vehicle for shutoff locations, breaker panel, tire size and similar facts
 - A getting started checklist on the dashboard for new users
+- A safety notice and disclaimer that every user must agree to on first launch. It is also in Settings and linked from each task
 - A "Tip the developer" card in Settings. Links are set in `src/lib/tip.ts`
 - Warranties tab for things you bought: purchase date, length, price, store and a reminder 30 days before coverage ends
 - Photos from the camera or library on homes, vehicles, warranty items and service logs
@@ -63,6 +64,7 @@ src/lib/
   effort.ts         difficulty and time guide per job
   diy.ts            DIY rooms, categories and totals
   tip.ts            developer name and tip links
+  legal.ts          safety notice and disclaimer text
   store.ts          app data, saved to the phone with AsyncStorage
   reminders.ts      local notification scheduling
   theme.ts          colors
@@ -85,6 +87,10 @@ npx eas-cli@latest submit --platform all
 
 5. Set the price in App Store Connect and Play Console. A paid download needs no purchase code in the app.
 6. Both stores ask for a privacy policy URL. This app collects nothing, so the policy can be short.
+
+## Disclaimer
+
+The wording lives in `src/lib/legal.ts`. It is a plain language starting point and has not been reviewed by an attorney. Have one review it before release. Raise `DISCLAIMER_VERSION` when the text changes and every user is asked to agree again. The same text should also go in the App Store and Google Play listings as the app's terms of use.
 
 ## Tip links
 

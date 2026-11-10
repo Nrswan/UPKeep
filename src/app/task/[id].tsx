@@ -13,6 +13,7 @@ import { cleanSpecs, specRows, suggestedSpecLabels } from '../../lib/specs';
 import { useStore } from '../../lib/store';
 import { useTheme } from '../../lib/theme';
 import { effortFor, effortLabel } from '../../lib/effort';
+import { SHORT_NOTICE } from '../../lib/legal';
 import { whyItMatters } from '../../lib/why';
 import type { Spec } from '../../lib/types';
 
@@ -123,6 +124,14 @@ export default function TaskDetail() {
               <Text style={[local.whyBody, { color: t.text }]}>{why}</Text>
             </View>
           </View>
+        ) : null}
+        {why || effort ? (
+          <Text style={[local.notice, { color: t.sub }]}>
+            {SHORT_NOTICE}{' '}
+            <Text accessibilityRole="link" style={{ color: t.primary }} onPress={() => router.push('/disclaimer')}>
+              Read the safety notice.
+            </Text>
+          </Text>
         ) : null}
       </Card>
 
@@ -252,6 +261,7 @@ export default function TaskDetail() {
 const local = StyleSheet.create({
   gap: { gap: 10 },
   heading: { fontSize: 22, fontWeight: '800' },
+  notice: { fontSize: 12, lineHeight: 17 },
   effort: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   effortText: { fontSize: 14, fontWeight: '700' },
   log: { flexDirection: 'row', alignItems: 'center', gap: 12 },

@@ -95,6 +95,9 @@ export type Settings = {
   leadDays: number;
   /** True once the user closes the getting started checklist. */
   hideStart?: boolean;
+  /** Version of the safety notice the user agreed to, and when. */
+  disclaimerVersion?: number;
+  disclaimerAcceptedAt?: string;
 };
 
 export type DueStatus = 'overdue' | 'soon' | 'unlogged' | 'ok';

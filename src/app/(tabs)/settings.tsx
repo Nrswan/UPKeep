@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Linking, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { Button, Card, Screen, SectionTitle, styles as ui } from '../../components/ui';
+import { SHORT_NOTICE } from '../../lib/legal';
 import { removePhotos } from '../../lib/photos';
 import { DEVELOPER_NAME, TIP_LINKS } from '../../lib/tip';
 import { ensurePermission } from '../../lib/reminders';
@@ -76,6 +78,12 @@ export default function SettingsScreen() {
         <Text style={[local.small, { color: t.sub }]}>
           Reminders arrive at 9 AM. Warranties alert 30 days before they end. Mileage tasks only alert by date, so keep each vehicle's odometer current.
         </Text>
+      </Card>
+
+      <SectionTitle>Safety</SectionTitle>
+      <Card style={local.gap}>
+        <Text style={[ui.sub, { color: t.sub }]}>{SHORT_NOTICE}</Text>
+        <Button kind="plain" icon="shield-checkmark-outline" label="Safety notice and disclaimer" onPress={() => router.push('/disclaimer')} />
       </Card>
 
       <SectionTitle>Your data</SectionTitle>
