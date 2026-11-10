@@ -18,6 +18,14 @@ Home and vehicle maintenance reminders for iPhone and Android. One codebase, bui
 - A plain "why it matters" note and a difficulty and time guide on every starter task, including when to call a pro
 - A "good to know" card on each home and vehicle for shutoff locations, breaker panel, tire size and similar facts
 - A getting started checklist on the dashboard for new users
+- Backup and restore from Settings. One file holds all records and, if chosen, the photos
+- A PDF maintenance record for any home or vehicle: details, appliances, service history, projects, spending by year and warranties
+- Seasonal checklists for spring, summer, fall and winter that fit the appliances and vehicles the user has
+- Service contacts with a call button, shown on the tasks each pro can help with
+- Safety recall lookup for vehicles from NHTSA's free public API
+- Rental properties: flag a home as a rental to add tenant and lease facts and mark it on lists and reports
+- Edit screen for homes and vehicles
+- A test reminder button in Settings
 - A safety notice and disclaimer that every user must agree to on first launch. It is also in Settings and linked from each task
 - A "Tip the developer" card in Settings. Links are set in `src/lib/tip.ts`
 - Warranties tab for things you bought: purchase date, length, price, store and a reminder 30 days before coverage ends
@@ -28,7 +36,7 @@ Home and vehicle maintenance reminders for iPhone and Android. One codebase, bui
 
 ## Run it
 
-You need Node 20 or newer.
+You need Node 20 or newer. The tests need Node 22.18 or newer.
 
 ```bash
 npm install
@@ -65,6 +73,12 @@ src/lib/
   diy.ts            DIY rooms, categories and totals
   tip.ts            developer name and tip links
   legal.ts          safety notice and disclaimer text
+  backup.ts         backup file format, building and checking (pure, tested)
+  report.ts         the printable maintenance record (pure, tested)
+  io.ts             file sharing for backups and PDF reports
+  seasons.ts        seasonal checklist items
+  contacts.ts       trades and which jobs they cover
+  recalls.ts        NHTSA recall lookup
   store.ts          app data, saved to the phone with AsyncStorage
   reminders.ts      local notification scheduling
   theme.ts          colors
@@ -74,7 +88,7 @@ tests/              unit tests for due.ts
 ## Before you publish
 
 1. Change `com.yourname.upkeep` in `app.json` (both `ios.bundleIdentifier` and `android.package`). This cannot be changed after release.
-2. Replace the placeholder icon and splash images in `assets/`.
+2. The icon in `assets/` is a first pass. Replace it if you want a different look.
 3. Create an Apple Developer account and a Google Play Console account.
 4. Build and submit with EAS:
 
@@ -99,6 +113,8 @@ The wording lives in `src/lib/legal.ts`. It is a plain language starting point a
 ## Known limits
 
 - Mileage tasks cannot fire a notification on their own because the app does not know the odometer until you update it. They show as due in the app once mileage is entered.
-- No backup or sync. Deleting the app deletes the data.
+- No automatic sync. Data stays on the phone unless the user makes a backup file from Settings. Backup files are not encrypted.
+- Recall results cover a year, make and model in general. Only a VIN check at nhtsa.gov shows whether one vehicle is affected.
+- Seasonal checklists follow the Northern Hemisphere calendar.
 - Starter intervals are general rules of thumb, not manufacturer specs. Picking a year, make and model does not load that vehicle's factory schedule. That data is only sold through paid providers, so it needs a paid API and a small server to hold the key.
 - Photos live in the app's own storage on the phone. They are not added to the camera roll and are removed if the app is deleted.

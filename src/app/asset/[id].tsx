@@ -5,13 +5,16 @@ import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Banner, BannerStat } from '../../components/Banner';
 import { SpecFields, SpecList } from '../../components/SpecFields';
+import { RecallCard } from '../../components/RecallCard';
 import { TaskRow } from '../../components/TaskRow';
 import { Button, Card, Empty, Field, IconBadge, Screen, SectionTitle, styles as ui, toNumber } from '../../components/ui';
 import { applianceLook } from '../../lib/appliances';
 import { findRoom, money, projectTotals } from '../../lib/diy';
 import { todayStr } from '../../lib/due';
 import { addPhoto, photoUri, removePhotos } from '../../lib/photos';
-import { cleanSpecs, HOME_FACTS, rowsForLabels, VEHICLE_FACTS } from '../../lib/specs';
+import { shareReport } from '../../lib/io';
+import { buildReportHtml } from '../../lib/report';
+import { cleanSpecs, HOME_FACTS, RENTAL_FACTS, rowsForLabels, VEHICLE_FACTS } from '../../lib/specs';
 import { useStore } from '../../lib/store';
 import type { Spec } from '../../lib/types';
 import { gradients, useTheme } from '../../lib/theme';
@@ -86,7 +89,26 @@ export default function AssetDetail() {
     ]);
 
   const label = vehicleLabel(asset);
-  const factLabels = asset.kind === 'home' ? HOME_FACTS : VEHICLE_FACTS;
+  const factLabels = asset.kind === 'home' ? (asset.rental ? [...HOME_FACTS, ...RENTAL_FACTS] : HOME_FACTS) : VEHICLE_FACTS;
+
+  const makeReport = async () => {
+    const s = useStore.getState();
+    const html = buildReportHtml({
+      asset,
+      tasks: s.tasks,
+      logs: s.logs,
+      appliances: s.appliances,
+      warranties: s.warranties,
+      projects: s.projects,
+      expenses: s.expenses,
+      today: todayStr(),
+    });
+    try {
+      await shareReport(html, asset.name);
+    } catch {
+      Alert.alert('Could not make the report', 'Please try again.');
+    }
+  };
 
   return (
     <Screen>
@@ -97,7 +119,7 @@ export default function AssetDetail() {
         icon={asset.kind === 'home' ? 'home-variant' : 'car-side'}
         photo={asset.photo}
         title={asset.name}
-        subtitle={asset.kind === 'vehicle' && label && label !== asset.name ? label : undefined}
+        subtitle={asset.kind === 'vehicle' ? (label && label !== asset.name ? label : undefined) : asset.rental ? 'Rental property' : undefined}
         height={200}
       >
         <View style={local.stats}>
@@ -112,6 +134,8 @@ export default function AssetDetail() {
       <View style={ui.row}>
         <Button small kind="plain" icon="camera-outline" label={asset.photo ? 'Retake photo' : 'Take photo'} onPress={() => changePhoto('camera')} />
         <Button small kind="plain" icon="images-outline" label="Choose photo" onPress={() => changePhoto('library')} />
+        <Button small kind="plain" icon="create-outline" label="Edit" onPress={() => router.push({ pathname: '/asset/edit', params: { id: asset.id } })} />
+        <Button small kind="plain" icon="document-text-outline" label="PDF report" onPress={makeReport} />
       </View>
 
       <Card style={local.gap}>
@@ -152,6 +176,8 @@ export default function AssetDetail() {
           </>
         )}
       </Card>
+
+      {asset.kind === 'vehicle' ? <RecallCard asset={asset} /> : null}
 
       {asset.kind === 'vehicle' ? (
         <Card style={local.gap}>

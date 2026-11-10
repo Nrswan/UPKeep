@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PhotoStrip } from '../../components/PhotoStrip';
 import { SpecFields, SpecList } from '../../components/SpecFields';
@@ -12,6 +12,7 @@ import { removePhotos } from '../../lib/photos';
 import { cleanSpecs, specRows, suggestedSpecLabels } from '../../lib/specs';
 import { useStore } from '../../lib/store';
 import { useTheme } from '../../lib/theme';
+import { dialable, tradeFor } from '../../lib/contacts';
 import { effortFor, effortLabel } from '../../lib/effort';
 import { SHORT_NOTICE } from '../../lib/legal';
 import { whyItMatters } from '../../lib/why';
@@ -23,6 +24,7 @@ export default function TaskDetail() {
   const task = useStore((s) => s.tasks.find((x) => x.id === id));
   const asset = useStore((s) => s.assets.find((a) => a.id === task?.assetId));
   const allLogs = useStore((s) => s.logs);
+  const contacts = useStore((s) => s.contacts);
   const leadDays = useStore((s) => s.settings.leadDays);
   const logDone = useStore((s) => s.logDone);
   const removeLog = useStore((s) => s.removeLog);
@@ -56,6 +58,8 @@ export default function TaskDetail() {
   const suggested = suggestedSpecLabels(task.title);
   const why = whyItMatters(task.title);
   const effort = effortFor(task.title);
+  const trade = tradeFor(task.title);
+  const pro = trade ? contacts.find((c) => c.trade === trade) : undefined;
 
   const openLog = () => {
     setDoneAt(todayStr());
@@ -111,6 +115,23 @@ export default function TaskDetail() {
           </View>
         ) : null}
         {effort?.tip ? <Text style={[ui.sub, { color: t.sub }]}>{effort.tip}</Text> : null}
+        {pro ? (
+          <Button
+            small
+            kind="plain"
+            icon="call-outline"
+            label={pro.phone ? `Call ${pro.name}` : `${pro.name} (add a phone number)`}
+            onPress={() => (pro.phone ? Linking.openURL(`tel:${dialable(pro.phone)}`) : router.push('/contacts'))}
+          />
+        ) : trade && effort?.level === 'pro' ? (
+          <Button
+            small
+            kind="plain"
+            icon="person-add-outline"
+            label={`Save your ${trade === 'HVAC' ? 'HVAC tech' : trade.toLowerCase()} to call`}
+            onPress={() => router.push({ pathname: '/contacts', params: { trade } })}
+          />
+        ) : null}
         {due.dueDate ? <Text style={[ui.sub, { color: t.sub }]}>Next by date: {formatDate(due.dueDate)}</Text> : null}
         {due.dueMiles != null ? (
           <Text style={[ui.sub, { color: t.sub }]}>Next by mileage: {due.dueMiles.toLocaleString()} mi</Text>

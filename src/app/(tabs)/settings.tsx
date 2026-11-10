@@ -3,11 +3,13 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Linking, StyleSheet, Switch, Text, View } from 'react-native';
 
-import { Button, Card, Screen, SectionTitle, styles as ui } from '../../components/ui';
+import { Button, Card, confirmAction, Screen, SectionTitle, styles as ui } from '../../components/ui';
 import { SHORT_NOTICE } from '../../lib/legal';
 import { removePhotos } from '../../lib/photos';
 import { DEVELOPER_NAME, TIP_LINKS } from '../../lib/tip';
-import { ensurePermission } from '../../lib/reminders';
+import { describeBackup, pickData } from '../../lib/backup';
+import { exportBackup, pickBackup, restorePhotos } from '../../lib/io';
+import { ensurePermission, sendTestReminder } from '../../lib/reminders';
 import { useStore } from '../../lib/store';
 import { useTheme } from '../../lib/theme';
 
@@ -32,6 +34,62 @@ export default function SettingsScreen() {
     resetAll();
   };
   const [blocked, setBlocked] = useState(false);
+  const [testNote, setTestNote] = useState('');
+  const [withPhotos, setWithPhotos] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [backupNote, setBackupNote] = useState('');
+  const restoreAll = useStore((s) => s.restoreAll);
+
+  const testReminder = async () => {
+    const result = await sendTestReminder(5);
+    setBlocked(result === 'blocked');
+    setTestNote(
+      result === 'sent'
+        ? 'Sent. It arrives in about 5 seconds. Lock the phone or go to the home screen to see it as a banner.'
+        : result === 'blocked'
+          ? ''
+          : 'Reminders only work in the phone app.'
+    );
+  };
+
+  const backUp = async () => {
+    setBusy(true);
+    setBackupNote('');
+    try {
+      const res = await exportBackup(pickData(useStore.getState()), withPhotos);
+      setBackupNote(
+        res.missing > 0
+          ? `Backup made. ${res.missing} ${res.missing === 1 ? 'photo was' : 'photos were'} missing and left out.`
+          : 'Backup made. Save it somewhere off this phone, like iCloud Drive, Google Drive or an email to yourself.'
+      );
+    } catch {
+      setBackupNote('Could not make the backup. Please try again.');
+    }
+    setBusy(false);
+  };
+
+  const restore = async () => {
+    setBackupNote('');
+    try {
+      const backup = await pickBackup();
+      if (!backup) return;
+      const when = backup.exportedAt ? ` from ${new Date(backup.exportedAt).toLocaleDateString()}` : '';
+      confirmAction(
+        'Replace everything on this phone?',
+        `This backup${when} has ${describeBackup(backup.data)}. Restoring it replaces what is in the app now.`,
+        'Restore',
+        async () => {
+          setBusy(true);
+          await restorePhotos(backup.photos);
+          restoreAll(backup.data);
+          setBusy(false);
+          setBackupNote('Restored.');
+        }
+      );
+    } catch (e) {
+      setBackupNote(e instanceof Error ? e.message : 'Could not read that file.');
+    }
+  };
 
   const toggleReminders = async (on: boolean) => {
     if (!on) {
@@ -78,6 +136,23 @@ export default function SettingsScreen() {
         <Text style={[local.small, { color: t.sub }]}>
           Reminders arrive at 9 AM. Warranties alert 30 days before they end. Mileage tasks only alert by date, so keep each vehicle's odometer current.
         </Text>
+        <Button small kind="plain" icon="notifications-outline" label="Send a test reminder" onPress={testReminder} />
+        {testNote ? <Text style={[local.small, { color: t.text }]}>{testNote}</Text> : null}
+      </Card>
+
+      <SectionTitle>Backup</SectionTitle>
+      <Card style={local.gap}>
+        <Text style={[ui.sub, { color: t.sub }]}>
+          Your records live only on this phone. A backup file lets you get them back after a lost, broken or new phone.
+        </Text>
+        <View style={local.between}>
+          <Text style={[ui.sub, { color: t.text }]}>Include photos</Text>
+          <Switch value={withPhotos} onValueChange={setWithPhotos} accessibilityLabel="Include photos in the backup" />
+        </View>
+        <Button icon="cloud-upload-outline" label={busy ? 'Working' : 'Back up now'} disabled={busy} onPress={backUp} />
+        <Button kind="plain" icon="cloud-download-outline" label="Restore from a backup" disabled={busy} onPress={restore} />
+        {backupNote ? <Text style={[ui.sub, { color: t.text }]}>{backupNote}</Text> : null}
+        <Text style={[local.small, { color: t.sub }]}>Backups with many photos can be large. The file is not encrypted, so keep it somewhere private.</Text>
       </Card>
 
       <SectionTitle>Safety</SectionTitle>

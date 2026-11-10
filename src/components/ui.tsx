@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -86,6 +87,7 @@ export function Field({ label, hint, ...input }: { label: string; hint?: string 
       <Text style={[styles.label, { color: t.sub }]}>{label}</Text>
       <TextInput
         placeholderTextColor={t.sub}
+        accessibilityLabel={label}
         {...input}
         style={[styles.input, { color: t.text, backgroundColor: t.card, borderColor: t.line }]}
       />
@@ -197,3 +199,19 @@ export const styles = StyleSheet.create({
   title: { fontSize: 17, fontWeight: '600' },
   sub: { fontSize: 14 },
 });
+
+/**
+ * Asks the user to confirm something. Uses the native alert on phones and the
+ * browser's own prompt on web, where the native alert is not available.
+ */
+export function confirmAction(title: string, message: string, actionLabel: string, onConfirm: () => void, destructive = true) {
+  if (Platform.OS === 'web') {
+    const ask = (globalThis as unknown as { confirm?: (m: string) => boolean }).confirm;
+    if (!ask || ask(`${title}\n\n${message}`)) onConfirm();
+    return;
+  }
+  Alert.alert(title, message, [
+    { text: 'Cancel', style: 'cancel' },
+    { text: actionLabel, style: destructive ? 'destructive' : 'default', onPress: onConfirm },
+  ]);
+}

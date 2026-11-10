@@ -57,3 +57,5 @@ export function cleanSpecs(rows: Spec[]): Spec[] {
 /** Things worth writing down once about a home or a vehicle. */
 export const HOME_FACTS = ['Main water shutoff', 'Gas shutoff', 'Breaker panel', 'Water heater location', 'Furnace filter size', 'Paint colors'];
 export const VEHICLE_FACTS = ['License plate', 'VIN', 'Tire size', 'Tire pressure', 'Oil weight', 'Insurance policy'];
+/** Extra facts offered when a home is a rental. */
+export const RENTAL_FACTS = ['Tenant', 'Tenant phone', 'Lease ends', 'Rent due'];

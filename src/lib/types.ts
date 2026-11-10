@@ -13,6 +13,8 @@ export type Asset = {
   photo?: string;
   /** Handy facts, such as where the water shutoff is or the tire size. */
   facts?: Spec[];
+  /** Homes only. True when the home is rented out. */
+  rental?: boolean;
   /** Local date (YYYY-MM-DD) the asset was added. */
   createdAt: string;
 };
@@ -65,6 +67,16 @@ export type LogEntry = {
   photos?: string[];
   /** What was used this time. */
   specs?: Spec[];
+};
+
+/** A pro to call: a plumber, an HVAC tech, a mechanic. */
+export type Contact = {
+  id: string;
+  name: string;
+  /** One of TRADES in lib/contacts.ts, or anything the user typed. */
+  trade: string;
+  phone?: string;
+  note?: string;
 };
 
 /** Something you bought that carries a warranty: an appliance, a roof, a tool. */

@@ -1,7 +1,9 @@
 import { router } from 'expo-router';
-import { SectionList, StyleSheet, Text, View } from 'react-native';
+import { Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 
 import { Banner, BannerStat } from '../../components/Banner';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
 import { GettingStarted } from '../../components/GettingStarted';
 import { TaskRow } from '../../components/TaskRow';
 import { Button, Card, Empty, IconBadge, Screen, SectionTitle, styles as ui } from '../../components/ui';
@@ -9,6 +11,7 @@ import { todayStr, warrantyInfo } from '../../lib/due';
 import { useStore } from '../../lib/store';
 import { gradients, useTheme } from '../../lib/theme';
 import { type DueItem, useDueItems } from '../../lib/useDue';
+import { useCurrentSeason } from '../../lib/useSeason';
 
 const GROUPS: { key: DueItem['due']['status']; title: string }[] = [
   { key: 'overdue', title: 'Overdue' },
@@ -43,6 +46,7 @@ export default function DueScreen() {
   const items = useDueItems();
   const hasAssets = useStore((s) => s.assets.length > 0);
   const warranties = useStore((s) => s.warranties);
+  const season = useCurrentSeason();
 
   if (!hasAssets) {
     return (
@@ -110,6 +114,24 @@ export default function DueScreen() {
               </View>
             </Banner>
             <GettingStarted />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${season.def.label} checklist. ${season.done} of ${season.total} done`}
+              onPress={() => router.push('/seasonal')}
+            >
+              <Card style={local.season}>
+                <View style={[local.seasonIcon, { backgroundColor: season.def.colors[0] }]}>
+                  <MaterialCommunityIcons name={season.def.icon as keyof typeof MaterialCommunityIcons.glyphMap} size={24} color="#FFFFFF" />
+                </View>
+                <View style={local.seasonText}>
+                  <Text style={[ui.title, { color: t.text }]}>{season.def.label} checklist</Text>
+                  <Text style={[ui.sub, { color: t.sub }]}>
+                    {season.done === season.total ? 'All done for the season' : `${season.done} of ${season.total} done`}
+                  </Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={22} color={t.sub} />
+              </Card>
+            </Pressable>
           </View>
         }
         renderSectionHeader={({ section }) => (
@@ -133,6 +155,9 @@ export default function DueScreen() {
 
 const local = StyleSheet.create({
   header: { gap: 12 },
+  season: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  seasonIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  seasonText: { flex: 1, gap: 2 },
   stats: { flexDirection: 'row', gap: 8, marginTop: 10 },
   help: { fontSize: 13, marginTop: 4, lineHeight: 18 },
   reasons: { gap: 14 },

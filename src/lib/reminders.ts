@@ -132,3 +132,14 @@ async function run(snap: Snapshot) {
     });
   }
 }
+
+/** Sends one notification a few seconds from now so the user can confirm reminders work. */
+export async function sendTestReminder(seconds = 5): Promise<'sent' | 'blocked' | 'unsupported'> {
+  if (!supported) return 'unsupported';
+  if (!(await ensurePermission())) return 'blocked';
+  await Notifications.scheduleNotificationAsync({
+    content: { title: 'Reminders are working', body: 'This is how Upkeep will let you know when something is due.' },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds, channelId: 'reminders' },
+  });
+  return 'sent';
+}

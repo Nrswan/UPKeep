@@ -5,10 +5,12 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { todayStr } from './due';
 import type { Preset } from './presets';
 import { findOption } from './appliances';
+import type { BackupData } from './backup';
 import type {
   Appliance,
   Asset,
   AssetKind,
+  Contact,
   Expense,
   LogEntry,
   Project,
@@ -52,6 +54,10 @@ type State = {
   projects: Project[];
   expenses: Expense[];
   settings: Settings;
+  /** Pros to call, shared across homes and vehicles. */
+  contacts: Contact[];
+  /** Seasonal checklist items ticked off, keyed by year and season: "2026-fall". */
+  seasonChecks: Record<string, string[]>;
   hydrated: boolean;
 
   addAsset: (input: {
@@ -66,7 +72,7 @@ type State = {
     /** Homes only. Each one is created along with its upkeep tasks. */
     appliances?: { category: string; option: string }[];
   }) => string;
-  updateAsset: (id: string, patch: Partial<Pick<Asset, 'name' | 'mileage' | 'photo' | 'year' | 'make' | 'model' | 'facts'>>) => void;
+  updateAsset: (id: string, patch: Partial<Pick<Asset, 'name' | 'mileage' | 'photo' | 'year' | 'make' | 'model' | 'facts' | 'rental'>>) => void;
   removeAsset: (id: string) => void;
 
   addTask: (input: Omit<Task, 'id' | 'startAt' | 'startMiles'>) => string;
@@ -95,6 +101,14 @@ type State = {
   updateExpense: (id: string, patch: Partial<Omit<Expense, 'id' | 'projectId'>>) => void;
   removeExpense: (id: string) => void;
 
+  addContact: (input: Omit<Contact, 'id'>) => string;
+  updateContact: (id: string, patch: Partial<Omit<Contact, 'id'>>) => void;
+  removeContact: (id: string) => void;
+  toggleSeasonItem: (key: string, itemId: string) => void;
+
+  /** Replaces everything with the contents of a backup. */
+  restoreAll: (data: BackupData) => void;
+
   updateSettings: (patch: Partial<Settings>) => void;
   resetAll: () => void;
 };
@@ -107,6 +121,8 @@ const defaults = {
   appliances: [] as Appliance[],
   projects: [] as Project[],
   expenses: [] as Expense[],
+  contacts: [] as Contact[],
+  seasonChecks: {} as Record<string, string[]>,
   settings: { remindersOn: true, leadDays: 7 } as Settings,
 };
 
@@ -259,6 +275,35 @@ export const useStore = create<State>()(
 
       removeExpense: (id) => set((s) => ({ expenses: s.expenses.filter((e) => e.id !== id) })),
 
+      addContact: (input) => {
+        const id = newId();
+        set((s) => ({ contacts: [...s.contacts, { ...input, id }] }));
+        return id;
+      },
+
+      updateContact: (id, patch) =>
+        set((s) => ({ contacts: s.contacts.map((c) => (c.id === id ? { ...c, ...patch } : c)) })),
+
+      removeContact: (id) => set((s) => ({ contacts: s.contacts.filter((c) => c.id !== id) })),
+
+      toggleSeasonItem: (key, itemId) =>
+        set((s) => {
+          const have = s.seasonChecks[key] ?? [];
+          const next = have.includes(itemId) ? have.filter((x) => x !== itemId) : [...have, itemId];
+          return { seasonChecks: { ...s.seasonChecks, [key]: next } };
+        }),
+
+      restoreAll: (data) =>
+        set((s) => ({
+          ...data,
+          // The agreement to the safety notice belongs to this install, not the backup.
+          settings: {
+            ...data.settings,
+            disclaimerVersion: s.settings.disclaimerVersion,
+            disclaimerAcceptedAt: s.settings.disclaimerAcceptedAt,
+          },
+        })),
+
       updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
 
       resetAll: () => set({ ...defaults }),
@@ -267,7 +312,7 @@ export const useStore = create<State>()(
       name: 'upkeep-v1',
       version: 1,
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: ({ assets, tasks, logs, warranties, appliances, projects, expenses, settings }) => ({
+      partialize: ({ assets, tasks, logs, warranties, appliances, projects, expenses, contacts, seasonChecks, settings }) => ({
         assets,
         tasks,
         logs,
@@ -275,6 +320,8 @@ export const useStore = create<State>()(
         appliances,
         projects,
         expenses,
+        contacts,
+        seasonChecks,
         settings,
       }),
       onRehydrateStorage: () => () => {
