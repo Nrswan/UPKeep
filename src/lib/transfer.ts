@@ -19,12 +19,14 @@ export type TransferOptions = {
   includeCosts: boolean;
   /** Warranties to pass along, such as ones on appliances that stay with the home. */
   warrantyIds: string[];
+  /** Papers to pass along, such as permits, inspections and manuals. */
+  docIds?: string[];
 };
 
 type Lists = Pick<
   BackupData,
   'assets' | 'tasks' | 'logs' | 'warranties' | 'appliances' | 'projects' | 'expenses' | 'contacts' | 'proJobs' | 'purchases'
->;
+> & { docs?: BackupData['docs'] };
 
 /** Picks out everything about one home or vehicle. */
 export function selectTransfer(all: Lists, assetId: string, opts: TransferOptions): Lists {
@@ -62,6 +64,7 @@ export function selectTransfer(all: Lists, assetId: string, opts: TransferOption
     proJobs: proJobs.map((j) => cost(j, 'cost')),
     contacts,
     warranties: all.warranties.filter((w) => opts.warrantyIds.includes(w.id)).map((w) => cost(w, 'price')),
+    docs: (all.docs ?? []).filter((d) => opts.docIds?.includes(d.id)).map((d) => ({ ...d, assetId })),
   };
 }
 
@@ -118,6 +121,7 @@ export function describeTransfer(d: Lists): string {
     part(d.projects.length, 'project', 'projects'),
     part(d.contacts.length, 'pro', 'pros'),
     part(d.warranties.length, 'warranty', 'warranties'),
+    part(d.docs?.length ?? 0, 'document', 'documents'),
   ]
     .filter(Boolean)
     .join(', ');
@@ -174,6 +178,7 @@ export function prepareImport(incoming: Lists, existingContacts: Contact[], newI
         .filter((j) => map.has(j.contactId))
         .map((j) => ({ ...j, id: fresh(j.id), contactId: link(j.contactId)!, assetId: link(j.assetId) })),
       warranties: incoming.warranties.map((w) => ({ ...w, id: fresh(w.id) })),
+      docs: (incoming.docs ?? []).map((d) => ({ ...d, id: fresh(d.id), assetId: link(d.assetId) })),
     },
   };
 }

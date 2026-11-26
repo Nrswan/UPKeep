@@ -1,7 +1,13 @@
 import type {
   Appliance,
   Asset,
+  Chore,
+  ChoreLog,
+  Claim,
   Contact,
+  HomeDoc,
+  Member,
+  Policy,
   ProJob,
   Purchase,
   Expense,
@@ -26,12 +32,35 @@ export type BackupData = {
   proJobs: ProJob[];
   purchases: Purchase[];
   seasonChecks: Record<string, string[]>;
+  docs: HomeDoc[];
+  policies: Policy[];
+  claims: Claim[];
+  members: Member[];
+  chores: Chore[];
+  choreLogs: ChoreLog[];
   settings: Settings;
 };
 
 export const BACKUP_VERSION = 1;
 
-const LISTS = ['assets', 'tasks', 'logs', 'warranties', 'appliances', 'projects', 'expenses', 'contacts', 'proJobs', 'purchases'] as const;
+const LISTS = [
+  'assets',
+  'tasks',
+  'logs',
+  'warranties',
+  'appliances',
+  'projects',
+  'expenses',
+  'contacts',
+  'proJobs',
+  'purchases',
+  'docs',
+  'policies',
+  'claims',
+  'members',
+  'chores',
+  'choreLogs',
+] as const;
 
 type BackupFile = {
   app: 'upkeep';
@@ -56,13 +85,19 @@ export function pickData(state: BackupData): BackupData {
     proJobs: state.proJobs,
     purchases: state.purchases,
     seasonChecks: state.seasonChecks,
+    docs: state.docs ?? [],
+    policies: state.policies ?? [],
+    claims: state.claims ?? [],
+    members: state.members ?? [],
+    chores: state.chores ?? [],
+    choreLogs: state.choreLogs ?? [],
     settings: state.settings,
   };
 }
 
 /** Every photo file name the data points to, without repeats. */
 export function photoNames(
-  data: Pick<BackupData, 'assets' | 'logs' | 'warranties' | 'appliances' | 'projects' | 'expenses'> & Partial<Pick<BackupData, 'proJobs' | 'purchases'>>
+  data: Pick<BackupData, 'assets' | 'logs' | 'warranties' | 'appliances' | 'projects' | 'expenses'> & Partial<Pick<BackupData, 'proJobs' | 'purchases' | 'docs' | 'policies' | 'claims'>>
 ): string[] {
   const names = new Set<string>();
   const add = (n?: string) => {
@@ -76,6 +111,9 @@ export function photoNames(
   data.expenses.forEach((e) => e.photos.forEach(add));
   data.proJobs?.forEach((j) => j.photos.forEach(add));
   data.purchases?.forEach((p) => p.photos.forEach(add));
+  data.docs?.forEach((d) => d.photos.forEach(add));
+  data.policies?.forEach((p) => p.photos.forEach(add));
+  data.claims?.forEach((c) => c.photos.forEach(add));
   return [...names];
 }
 
@@ -152,5 +190,10 @@ export function describeBackup(data: BackupData): string {
     part(data.logs.length, 'log entry', 'log entries'),
     part(data.warranties.length, 'warranty', 'warranties'),
     part(data.projects.length, 'project', 'projects'),
-  ].join(', ');
+    data.docs.length ? part(data.docs.length, 'document', 'documents') : '',
+    data.policies.length ? part(data.policies.length, 'policy', 'policies') : '',
+    data.chores.length ? part(data.chores.length, 'chore', 'chores') : '',
+  ]
+    .filter(Boolean)
+    .join(', ');
 }

@@ -150,7 +150,7 @@ export async function restorePhotos(photos: Record<string, string>): Promise<voi
 }
 
 /** Turns a report page into a PDF and opens the share sheet. On web it opens the page to print. */
-export async function shareReport(html: string, title: string): Promise<void> {
+export async function shareReport(html: string, title: string, kind: 'record' | 'insurance' = 'record'): Promise<void> {
   if (!native) {
     const g = globalThis as unknown as { open: (u?: string) => { document: { write: (h: string) => void; close: () => void } } | null };
     const win = g.open('');
@@ -163,12 +163,31 @@ export async function shareReport(html: string, title: string): Promise<void> {
   const { uri } = await Print.printToFileAsync({ html });
   // Give the file a readable name before sharing it.
   const safe = title.replace(/[^\w -]+/g, '').trim().replace(/\s+/g, '-') || 'upkeep';
-  const named = new File(Paths.cache, `${safe}-record-${todayStr()}.pdf`);
+  const named = new File(Paths.cache, `${safe}-${kind === 'insurance' ? 'insurance-summary' : 'record'}-${todayStr()}.pdf`);
   try {
     if (named.exists) await named.delete();
     await new File(uri).copy(named);
-    await Sharing.shareAsync(named.uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf', dialogTitle: 'Share maintenance record' });
+    await Sharing.shareAsync(named.uri, {
+      mimeType: 'application/pdf',
+      UTI: 'com.adobe.pdf',
+      dialogTitle: kind === 'insurance' ? 'Share insurance summary' : 'Share maintenance record',
+    });
   } catch {
     await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
   }
+}
+
+/** Saved photos as data URIs so they can go inside a PDF. On web the saved names already load. */
+export async function photoDataUris(names: string[]): Promise<Record<string, string>> {
+  const out: Record<string, string> = {};
+  if (!native) {
+    for (const n of names) out[n] = n.split('#')[0];
+    return out;
+  }
+  const { photos } = await readPhotos(names);
+  for (const [n, b64] of Object.entries(photos)) {
+    const ext = n.split('.').pop()?.toLowerCase();
+    out[n] = `data:image/${ext === 'png' ? 'png' : ext === 'heic' ? 'heic' : 'jpeg'};base64,${b64}`;
+  }
+  return out;
 }

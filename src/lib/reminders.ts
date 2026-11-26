@@ -3,7 +3,8 @@ import { Platform } from 'react-native';
 
 import { APP_NAME } from './brand';
 import { addDays, computeDue, latestLog, parseDate, todayStr, WARRANTY_SOON_DAYS, warrantyInfo } from './due';
-import type { Asset, LogEntry, Settings, Task, WarrantyItem } from './types';
+import { policyType, RENEW_SOON_DAYS } from './insurance';
+import type { Asset, LogEntry, Policy, Settings, Task, WarrantyItem } from './types';
 
 /** iOS keeps at most 64 pending local notifications per app. */
 const MAX_SCHEDULED = 60;
@@ -38,7 +39,7 @@ export async function ensurePermission(): Promise<boolean> {
   return asked.granted;
 }
 
-type Snapshot = { assets: Asset[]; tasks: Task[]; logs: LogEntry[]; warranties: WarrantyItem[]; settings: Settings };
+type Snapshot = { assets: Asset[]; tasks: Task[]; logs: LogEntry[]; warranties: WarrantyItem[]; settings: Settings; policies?: Policy[] };
 
 export type PlannedReminder = { at: Date; title: string; body: string };
 
@@ -88,6 +89,19 @@ export function planReminders(snap: Snapshot, now: Date = new Date()): PlannedRe
     });
   }
 
+  // A month before a policy renews, while there is still time to shop around.
+  for (const p of snap.policies ?? []) {
+    if (!p.renewsAt) continue;
+    const at = parseDate(addDays(p.renewsAt, -RENEW_SOON_DAYS));
+    at.setHours(REMIND_HOUR, 0, 0, 0);
+    if (at.getTime() <= now.getTime()) continue;
+    planned.push({
+      at,
+      title: `${p.company} ${policyType(p.type).label.toLowerCase()} policy renews in ${RENEW_SOON_DAYS} days`,
+      body: 'Check your coverage and compare quotes before it renews.',
+    });
+  }
+
   planned.sort((a, b) => a.at.getTime() - b.at.getTime());
   const out = planned.slice(0, MAX_SCHEDULED - 1);
 
@@ -118,7 +132,7 @@ export function syncReminders(snap: Snapshot) {
 
 async function run(snap: Snapshot) {
   await Notifications.cancelAllScheduledNotificationsAsync();
-  if (!snap.settings.remindersOn || (snap.tasks.length === 0 && snap.warranties.length === 0)) return;
+  if (!snap.settings.remindersOn || (snap.tasks.length === 0 && snap.warranties.length === 0 && !snap.policies?.length)) return;
   const { granted } = await Notifications.getPermissionsAsync();
   if (!granted) return;
 

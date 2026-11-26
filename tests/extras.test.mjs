@@ -40,7 +40,8 @@ test('a backup round trips with every list and its photos', () => {
   const text = buildBackup({ ...d, hydrated: true, addAsset() {} }, { 'a.jpg': 'QUJD' }, '2026-11-10T16:00:00.000Z');
   assert.ok(!text.includes('hydrated'), 'only saved data goes in the file');
   const back = parseBackup(text);
-  assert.deepEqual(back.data, d);
+  // Lists added in version 1.1 come back empty when the app had none.
+  assert.deepEqual(back.data, { ...d, docs: [], policies: [], claims: [], members: [], chores: [], choreLogs: [] });
   assert.deepEqual(back.photos, { 'a.jpg': 'QUJD' });
   assert.equal(back.exportedAt, '2026-11-10T16:00:00.000Z');
   assert.equal(describeBackup(back.data), '2 homes and vehicles, 2 tasks, 3 log entries, 1 warranty, 1 project');

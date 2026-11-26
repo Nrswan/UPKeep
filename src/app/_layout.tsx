@@ -17,11 +17,12 @@ export default function RootLayout() {
   const logs = useStore((s) => s.logs);
   const warranties = useStore((s) => s.warranties);
   const settings = useStore((s) => s.settings);
+  const policies = useStore((s) => s.policies);
 
   // Reminders are rebuilt from scratch whenever saved data changes.
   useEffect(() => {
-    if (hydrated) syncReminders({ assets, tasks, logs, warranties, settings });
-  }, [hydrated, assets, tasks, logs, warranties, settings]);
+    if (hydrated) syncReminders({ assets, tasks, logs, warranties, settings, policies });
+  }, [hydrated, assets, tasks, logs, warranties, settings, policies]);
 
   if (!hydrated) return null;
 
@@ -55,6 +56,16 @@ export default function RootLayout() {
         <Stack.Screen name="buy" options={{ title: 'Add', presentation: 'modal' }} />
         <Stack.Screen name="asset/transfer" options={{ title: 'Hand off' }} />
         <Stack.Screen name="import" options={{ title: 'Import records', presentation: 'modal' }} />
+        <Stack.Screen name="docs" options={{ title: 'Documents' }} />
+        <Stack.Screen name="doc" options={{ title: 'Document', presentation: 'modal' }} />
+        <Stack.Screen name="insurance" options={{ title: 'Insurance' }} />
+        <Stack.Screen name="policy" options={{ title: 'Policy', presentation: 'modal' }} />
+        <Stack.Screen name="claim" options={{ title: 'Claim', presentation: 'modal' }} />
+        <Stack.Screen name="insurance-details" options={{ title: 'Details for insurance' }} />
+        <Stack.Screen name="chores" options={{ title: 'Chores' }} />
+        <Stack.Screen name="chore" options={{ title: 'Chore', presentation: 'modal' }} />
+        <Stack.Screen name="household" options={{ title: 'Household' }} />
+        <Stack.Screen name="member" options={{ title: 'Person', presentation: 'modal' }} />
         <Stack.Screen name="disclaimer" options={{ title: 'Safety and disclaimer' }} />
         <Stack.Screen name="warranty/new" options={{ title: 'Add a warranty', presentation: 'modal' }} />
         <Stack.Screen name="warranty/[id]" options={{ title: 'Warranty' }} />

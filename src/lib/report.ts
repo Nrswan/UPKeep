@@ -31,7 +31,7 @@ export function esc(v: unknown): string {
     .replace(/'/g, '&#39;');
 }
 
-const usd = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+export const usd = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 /** Spending per calendar year, newest first. Amounts are summed in cents. */
 export function spendingByYear(
@@ -51,7 +51,7 @@ export function spendingByYear(
     .map(([year, r]) => ({ year, maintenance: r.m / 100, diy: r.d / 100, total: (r.m + r.d) / 100 }));
 }
 
-function table(head: string[], rows: string[][], rightCols: number[] = []): string {
+export function table(head: string[], rows: string[][], rightCols: number[] = []): string {
   const cls = (i: number) => (rightCols.includes(i) ? ' class="r"' : '');
   return `<table><thead><tr>${head.map((h, i) => `<th${cls(i)}>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows
     .map((r) => `<tr>${r.map((c, i) => `<td${cls(i)}>${c}</td>`).join('')}</tr>`)
@@ -215,12 +215,13 @@ export function buildReportHtml(input: ReportInput): string {
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(
     asset.name
-  )} maintenance record</title><style>
-*{box-sizing:border-box}body{font-family:-apple-system,Helvetica,Arial,sans-serif;color:#16201B;font-size:12px;line-height:1.45;margin:28px}
+  )} maintenance record</title><style>${REPORT_CSS}</style></head><body>${parts.join('')}</body></html>`;
+}
+
+export const REPORT_CSS = `*{box-sizing:border-box}body{font-family:-apple-system,Helvetica,Arial,sans-serif;color:#16201B;font-size:12px;line-height:1.45;margin:28px}
 h1{font-size:24px;margin:0 0 2px}h2{font-size:14px;margin:22px 0 6px;padding-bottom:4px;border-bottom:2px solid #1F6F54;color:#1F6F54}
 .sub{margin:0;color:#5E6B64;font-size:12px}.muted{color:#5E6B64;font-size:11px}
 table{width:100%;border-collapse:collapse}th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#5E6B64;border-bottom:1px solid #C9CEC6;padding:4px 6px}
 td{padding:5px 6px;border-bottom:1px solid #E8EBE5;vertical-align:top}.r{text-align:right;white-space:nowrap}
 tr{page-break-inside:avoid}.foot{margin-top:26px;color:#5E6B64;font-size:10px}
-</style></head><body>${parts.join('')}</body></html>`;
-}
+`;

@@ -31,6 +31,8 @@ export default function AssetDetail() {
   const allPurchases = useStore((s) => s.purchases);
   const allProjects = useStore((s) => s.projects);
   const allExpenses = useStore((s) => s.expenses);
+  const allDocs = useStore((s) => s.docs);
+  const allPolicies = useStore((s) => s.policies);
   const updateAsset = useStore((s) => s.updateAsset);
   const removeAsset = useStore((s) => s.removeAsset);
   const items = useDueItems(id);
@@ -203,6 +205,34 @@ export default function AssetDetail() {
           <Button small kind="plain" icon="search-outline" label="Open the list" onPress={() => router.push({ pathname: '/buys', params: { assetId: asset.id } })} />
         ) : null}
       </View>
+
+      <SectionTitle>Insurance and papers</SectionTitle>
+      <Card style={local.gap}>
+        {(() => {
+          const docCount = allDocs.filter((d) => d.assetId === asset.id).length;
+          const mine = allPolicies.filter((p) => p.assetId === asset.id);
+          return (
+            <>
+              <Text style={[ui.sub, { color: t.text }]}>
+                {mine.length ? mine.map((p) => p.company).join(', ') : 'No policy saved yet'}
+                {'  ·  '}
+                {docCount} document{docCount === 1 ? '' : 's'}
+              </Text>
+              <View style={ui.row}>
+                <Button small kind="plain" icon="umbrella-outline" label="Insurance" onPress={() => router.push({ pathname: '/insurance', params: { assetId: asset.id } })} />
+                <Button small kind="plain" icon="folder-outline" label="Documents" onPress={() => router.push({ pathname: '/docs', params: { assetId: asset.id } })} />
+                <Button
+                  small
+                  kind="plain"
+                  icon="document-text-outline"
+                  label="Insurance PDF"
+                  onPress={() => router.push({ pathname: '/insurance-details', params: { id: asset.id } })}
+                />
+              </View>
+            </>
+          );
+        })()}
+      </Card>
 
       {asset.kind === 'vehicle' ? <RecallCard asset={asset} /> : null}
 

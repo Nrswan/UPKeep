@@ -139,13 +139,31 @@ export function DateStepper({
   value,
   onChange,
   label = 'Date done',
+  future,
 }: {
   value: string;
   onChange: (v: string) => void;
   label?: string;
+  /** Allows dates after today, for things like a renewal date. */
+  future?: boolean;
 }) {
   const t = useTheme();
   const today = todayStr();
+  if (future) {
+    return (
+      <View style={styles.field}>
+        <Text style={[styles.label, { color: t.sub }]}>{label}</Text>
+        <Text style={[styles.dateValue, { color: t.text }]}>{value === today ? 'Today' : formatDate(value)}</Text>
+        <View style={styles.row}>
+          <Button small kind="plain" label="-1 month" onPress={() => onChange(addMonths(value, -1))} />
+          <Button small kind="plain" label="-1 day" onPress={() => onChange(addDays(value, -1))} />
+          <Button small kind="plain" label="+1 day" onPress={() => onChange(addDays(value, 1))} />
+          <Button small kind="plain" label="+1 month" onPress={() => onChange(addMonths(value, 1))} />
+          <Button small kind="plain" label="+1 year" onPress={() => onChange(addMonths(value, 12))} />
+        </View>
+      </View>
+    );
+  }
   const clamp = (v: string) => (v > today ? today : v);
   return (
     <View style={styles.field}>

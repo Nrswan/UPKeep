@@ -12,6 +12,7 @@ import { removePhotos } from '../../lib/photos';
 import { buildReportHtml } from '../../lib/report';
 import { useStore } from '../../lib/store';
 import { gradients, useTheme } from '../../lib/theme';
+import { docCategory } from '../../lib/insurance';
 import { describeTransfer, selectTransfer } from '../../lib/transfer';
 
 /** Sends one home or vehicle's records to its next owner. */
@@ -23,12 +24,13 @@ export default function TransferScreen() {
   const [includeCosts, setIncludeCosts] = useState(false);
   const [includePhotos, setIncludePhotos] = useState(true);
   const [warrantyIds, setWarrantyIds] = useState<string[]>([]);
+  const [docIds, setDocIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState('');
 
   const picked = useMemo(
-    () => (asset ? selectTransfer(state, asset.id, { includeCosts, warrantyIds }) : null),
-    [state, asset, includeCosts, warrantyIds]
+    () => (asset ? selectTransfer(state, asset.id, { includeCosts, warrantyIds, docIds }) : null),
+    [state, asset, includeCosts, warrantyIds, docIds]
   );
 
   if (!asset || !picked) {
@@ -150,10 +152,40 @@ export default function TransferScreen() {
         </>
       ) : null}
 
+      {state.docs.some((d) => d.assetId === asset.id) ? (
+        <>
+          <SectionTitle>Papers to pass along</SectionTitle>
+          <Text style={[ui.sub, { color: t.sub }]}>Permits, inspections, manuals and surveys help the next owner. Leave out anything with your own money or loan details.</Text>
+          <Card style={local.list}>
+            {state.docs
+              .filter((d) => d.assetId === asset.id)
+              .map((d, i) => {
+                const on = docIds.includes(d.id);
+                return (
+                  <Pressable
+                    key={d.id}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: on }}
+                    accessibilityLabel={d.title}
+                    onPress={() => setDocIds((ids) => (on ? ids.filter((x) => x !== d.id) : [...ids, d.id]))}
+                    style={[local.item, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.line }]}
+                  >
+                    <Ionicons name={on ? 'checkbox' : 'square-outline'} size={24} color={on ? t.primary : t.sub} />
+                    <View style={local.flex}>
+                      <Text style={[local.itemTitle, { color: t.text }]}>{d.title}</Text>
+                      <Text style={[ui.sub, { color: t.sub }]}>{docCategory(d.category).label}</Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+          </Card>
+        </>
+      ) : null}
+
       <View style={[local.never, { backgroundColor: t.blueBg }]}>
         <Ionicons name="lock-closed-outline" size={18} color={t.blue} />
         <Text style={[local.neverText, { color: t.text }]}>
-          Never included: your other homes and vehicles, pros who did not work here and any tenant or lease details.
+          Never included: your other homes and vehicles, pros who did not work here and any tenant or lease details, and your insurance policies and claims.
         </Text>
       </View>
 

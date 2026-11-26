@@ -1,7 +1,10 @@
+import * as DocumentPicker from 'expo-document-picker';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
+import * as Sharing from 'expo-sharing';
 
 import { APP_NAME } from './brand';
+import { isPdf, safeFileName } from './insurance';
 import { Alert, Linking, Platform } from 'react-native';
 
 /**
@@ -69,5 +72,45 @@ export async function removePhotos(names: (string | undefined)[]) {
     } catch {
       // A missing file is fine. The record is being removed anyway.
     }
+  }
+}
+
+/**
+ * Lets the user pick a PDF or picture from Files, iCloud Drive or Google Drive
+ * and copies it into the app. Resolves to the saved name, or null if cancelled.
+ */
+export async function addFile(): Promise<string | null> {
+  try {
+    const picked = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'], copyToCacheDirectory: true });
+    if (picked.canceled || !picked.assets?.length) return null;
+    const asset = picked.assets[0];
+    const id = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+    const name = safeFileName(asset.name || (asset.mimeType === 'application/pdf' ? 'file.pdf' : 'file.jpg'), id);
+    // On web the picked file stays a blob link. The original name rides along after a # so it shows in the list.
+    if (!native) return `${asset.uri}#${name}`;
+    const dir = photoDir();
+    if (!dir.exists) await dir.create({ intermediates: true, idempotent: true });
+    await new File(asset.uri).copy(new File(dir, name));
+    return name;
+  } catch {
+    Alert.alert('Could not add that file', 'Please try again.');
+    return null;
+  }
+}
+
+/** Opens a saved PDF in the phone's viewer, which also has share and print. */
+export async function openFile(name: string) {
+  if (!native) {
+    const g = globalThis as unknown as { open?: (u: string) => void };
+    g.open?.(name.split('#')[0]);
+    return;
+  }
+  try {
+    await Sharing.shareAsync(photoUri(name), {
+      mimeType: isPdf(name) ? 'application/pdf' : 'image/jpeg',
+      UTI: isPdf(name) ? 'com.adobe.pdf' : 'public.jpeg',
+    });
+  } catch {
+    Alert.alert('Could not open that file', 'It may have been removed.');
   }
 }

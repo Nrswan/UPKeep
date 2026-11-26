@@ -1,8 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { addPhoto, photoUri } from '../lib/photos';
+import { fileLabel, isPdf } from '../lib/insurance';
+import { addFile, addPhoto, openFile, photoUri } from '../lib/photos';
 import { useTheme } from '../lib/theme';
 import { Button, styles as ui } from './ui';
 
@@ -26,21 +27,24 @@ export function PhotoStrip({
   onChange,
   label = 'Photos',
   size = 84,
+  files,
 }: {
   photos: string[];
   onChange?: (photos: string[]) => void;
   label?: string;
   size?: number;
+  /** Also lets the user add PDFs from Files. */
+  files?: boolean;
 }) {
   const t = useTheme();
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const editable = !!onChange;
 
-  const add = async (source: 'camera' | 'library') => {
+  const add = async (source: 'camera' | 'library' | 'file') => {
     if (busy) return;
     setBusy(true);
-    const name = await addPhoto(source);
+    const name = source === 'file' ? await addFile() : await addPhoto(source);
     setBusy(false);
     if (name) onChange?.([...photos, name]);
   };
@@ -54,13 +58,27 @@ export function PhotoStrip({
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={local.strip}>
           {photos.map((p, i) => (
             <View key={p}>
-              <Pressable accessibilityRole="imagebutton" accessibilityLabel={`Photo ${i + 1}. Tap to enlarge`} onPress={() => setOpen(p)}>
-                <Image source={{ uri: photoUri(p) }} style={[local.thumb, { width: size, height: size, backgroundColor: t.muted }]} />
-              </Pressable>
+              {isPdf(p) ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${fileLabel(p, i)}. Tap to open`}
+                  onPress={() => openFile(p)}
+                  style={[local.thumb, local.pdf, { width: size, height: size, backgroundColor: t.dangerBg }]}
+                >
+                  <MaterialCommunityIcons name="file-pdf-box" size={size * 0.42} color={t.danger} />
+                  <Text style={[local.pdfName, { color: t.text }]} numberOfLines={2}>
+                    {fileLabel(p, i)}
+                  </Text>
+                </Pressable>
+              ) : (
+                <Pressable accessibilityRole="imagebutton" accessibilityLabel={`Photo ${i + 1}. Tap to enlarge`} onPress={() => setOpen(p)}>
+                  <Image source={{ uri: photoUri(p) }} style={[local.thumb, { width: size, height: size, backgroundColor: t.muted }]} />
+                </Pressable>
+              )}
               {editable ? (
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`Remove photo ${i + 1}`}
+                  accessibilityLabel={isPdf(p) ? `Remove ${fileLabel(p, i)}` : `Remove photo ${i + 1}`}
                   hitSlop={8}
                   onPress={() => onChange?.(photos.filter((x) => x !== p))}
                   style={[local.remove, { backgroundColor: t.card, borderColor: t.line }]}
@@ -76,6 +94,7 @@ export function PhotoStrip({
         <View style={ui.row}>
           <Button small kind="plain" icon="camera-outline" label="Take photo" disabled={busy} onPress={() => add('camera')} />
           <Button small kind="plain" icon="images-outline" label="Choose photo" disabled={busy} onPress={() => add('library')} />
+          {files ? <Button small kind="plain" icon="document-attach-outline" label="Add PDF" disabled={busy} onPress={() => add('file')} /> : null}
         </View>
       ) : null}
       <PhotoViewer name={open} onClose={() => setOpen(null)} />
@@ -86,6 +105,8 @@ export function PhotoStrip({
 const local = StyleSheet.create({
   strip: { gap: 10, paddingTop: 6, paddingRight: 6 },
   thumb: { borderRadius: 10 },
+  pdf: { alignItems: 'center', justifyContent: 'center', padding: 6, gap: 2 },
+  pdfName: { fontSize: 10, fontWeight: '600', textAlign: 'center' },
   remove: {
     position: 'absolute',
     top: -6,

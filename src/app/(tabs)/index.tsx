@@ -10,6 +10,8 @@ import { TaskRow } from '../../components/TaskRow';
 import { Button, Card, Empty, IconBadge, SectionTitle, styles as ui } from '../../components/ui';
 import { MASCOT_NAME } from '../../lib/brand';
 import { todayStr, warrantyInfo } from '../../lib/due';
+import { choreDue } from '../../lib/chores';
+import { renewalInfo } from '../../lib/insurance';
 import { greeting, healthLabel, healthScore, level, tipOfDay } from '../../lib/fun';
 import { useStore } from '../../lib/store';
 import { gradients, useTheme } from '../../lib/theme';
@@ -96,6 +98,11 @@ export default function HomeScreen() {
   const logs = useStore((s) => s.logs);
   const proJobs = useStore((s) => s.proJobs);
   const contacts = useStore((s) => s.contacts);
+  const policies = useStore((s) => s.policies);
+  const docs = useStore((s) => s.docs);
+  const members = useStore((s) => s.members);
+  const chores = useStore((s) => s.chores);
+  const choreLogs = useStore((s) => s.choreLogs);
   const season = useCurrentSeason();
   const today = todayStr();
 
@@ -141,6 +148,8 @@ export default function HomeScreen() {
   const overdue = count('overdue');
   const soon = count('soon');
   const endingSoon = warranties.filter((w) => warrantyInfo(w, today).status === 'soon').length;
+  const choresLeft = chores.filter((c) => ['overdue', 'today'].includes(choreDue(c, choreLogs, today).status)).length;
+  const renewing = policies.filter((p) => ['soon', 'past'].includes(renewalInfo(p, today).status)).length;
   const score = healthScore(items.map((i) => i.due.status));
   const jobs = logs.length + proJobs.length;
   const lvl = level(jobs);
@@ -224,6 +233,27 @@ export default function HomeScreen() {
                   title="Warranties"
                   sub={endingSoon ? `${endingSoon} ending soon` : warranties.length ? `${warranties.length} on file` : 'Snap a receipt'}
                   onPress={() => router.push('/warranties')}
+                />
+                <Tile
+                  icon="broom"
+                  color="#E07B1F"
+                  title="Chores"
+                  sub={!members.length ? 'Get the house helping' : choresLeft ? `${choresLeft} to do today` : chores.length ? 'All caught up' : 'Hand some out'}
+                  onPress={() => router.push('/chores')}
+                />
+                <Tile
+                  icon="umbrella-outline"
+                  color="#1B4E96"
+                  title="Insurance"
+                  sub={renewing ? `${renewing} renewing soon` : policies.length ? `${policies.length} polic${policies.length === 1 ? 'y' : 'ies'}` : 'Agent and claims'}
+                  onPress={() => router.push('/insurance')}
+                />
+                <Tile
+                  icon="folder-file-outline"
+                  color="#176B7A"
+                  title="Documents"
+                  sub={docs.length ? `${docs.length} saved` : 'Deeds, permits, papers'}
+                  onPress={() => router.push('/docs')}
                 />
                 <Tile icon="plus" color="#1F8A63" title="Add" sub="Home or vehicle" onPress={() => router.push('/asset/new')} />
               </View>

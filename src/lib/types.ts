@@ -144,8 +144,106 @@ export type WarrantyInfo = {
   label: string;
 };
 
+/** An important paper: closing documents, a deed, a permit, an inspection. */
+export type HomeDoc = {
+  id: string;
+  /** The home or vehicle it belongs to. Blank for papers that cover everything. */
+  assetId?: string;
+  /** Key from DOC_CATEGORIES in lib/insurance.ts. */
+  category: string;
+  title: string;
+  /** Local date (YYYY-MM-DD) on the paper. */
+  date?: string;
+  note?: string;
+  /** Photos and PDF files, by saved file name. */
+  photos: string[];
+};
+
+/** An insurance policy for a home, a vehicle or something else. */
+export type Policy = {
+  id: string;
+  assetId?: string;
+  /** Key from POLICY_TYPES in lib/insurance.ts. */
+  type: string;
+  company: string;
+  policyNumber?: string;
+  agentName?: string;
+  agentPhone?: string;
+  agentEmail?: string;
+  /** The number to call to start a claim. */
+  claimsPhone?: string;
+  /** Main coverage amount, such as dwelling coverage. */
+  coverage?: number;
+  deductible?: number;
+  premium?: number;
+  /** How often the premium is paid. */
+  premiumEvery?: 'year' | 'half' | 'month';
+  /** Local date (YYYY-MM-DD) the policy renews. */
+  renewsAt?: string;
+  note?: string;
+  /** Declarations page, ID cards and the policy itself. */
+  photos: string[];
+};
+
+/** A claim made on a policy. */
+export type Claim = {
+  id: string;
+  policyId?: string;
+  assetId?: string;
+  /** What happened: "Hail damage to the roof". */
+  title: string;
+  /** Local date (YYYY-MM-DD) of the loss. */
+  date: string;
+  claimNumber?: string;
+  /** Key from CLAIM_STATUSES in lib/insurance.ts. */
+  status: string;
+  adjuster?: string;
+  adjusterPhone?: string;
+  /** Amount asked for. */
+  claimed?: number;
+  /** Amount paid out. */
+  paid?: number;
+  note?: string;
+  /** Damage pictures, estimates and letters. */
+  photos: string[];
+};
+
+/** Someone in the household. */
+export type Member = {
+  id: string;
+  name: string;
+  /** owner can change chores and people. The rest can only check chores off. */
+  role: 'owner' | 'adult' | 'roommate' | 'kid';
+  /** Key from MEMBER_COLORS in lib/chores.ts. */
+  color: string;
+};
+
+/** A household chore. */
+export type Chore = {
+  id: string;
+  title: string;
+  /** Who it is assigned to. Blank means anyone. */
+  memberId?: string;
+  /** Repeat every N days. Blank means it is done once. */
+  everyDays?: number;
+  /** Local date (YYYY-MM-DD) it is first due. */
+  startAt: string;
+  note?: string;
+};
+
+export type ChoreLog = {
+  id: string;
+  choreId: string;
+  /** Who did it. */
+  memberId?: string;
+  /** Local date (YYYY-MM-DD). */
+  doneAt: string;
+};
+
 export type Settings = {
   remindersOn: boolean;
+  /** Four digit code that protects changes to chores and people. */
+  householdPin?: string;
   /** Remind this many days before a task is due. */
   leadDays: number;
   /** True once the user closes the getting started checklist. */

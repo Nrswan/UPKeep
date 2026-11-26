@@ -10,7 +10,13 @@ import type {
   Appliance,
   Asset,
   AssetKind,
+  Chore,
+  ChoreLog,
+  Claim,
   Contact,
+  HomeDoc,
+  Member,
+  Policy,
   ProJob,
   Purchase,
   Expense,
@@ -64,6 +70,12 @@ type State = {
   purchases: Purchase[];
   /** Seasonal checklist items ticked off, keyed by year and season: "2026-fall". */
   seasonChecks: Record<string, string[]>;
+  docs: HomeDoc[];
+  policies: Policy[];
+  claims: Claim[];
+  members: Member[];
+  chores: Chore[];
+  choreLogs: ChoreLog[];
   hydrated: boolean;
 
   addAsset: (input: {
@@ -123,6 +135,27 @@ type State = {
   removeProJob: (id: string) => void;
   toggleSeasonItem: (key: string, itemId: string) => void;
 
+  addDoc: (input: Omit<HomeDoc, 'id'>) => string;
+  updateDoc: (id: string, patch: Partial<Omit<HomeDoc, 'id'>>) => void;
+  removeDoc: (id: string) => void;
+  addPolicy: (input: Omit<Policy, 'id'>) => string;
+  updatePolicy: (id: string, patch: Partial<Omit<Policy, 'id'>>) => void;
+  /** Claims on the policy are kept without the link. */
+  removePolicy: (id: string) => void;
+  addClaim: (input: Omit<Claim, 'id'>) => string;
+  updateClaim: (id: string, patch: Partial<Omit<Claim, 'id'>>) => void;
+  removeClaim: (id: string) => void;
+
+  addMember: (input: Omit<Member, 'id'>) => string;
+  updateMember: (id: string, patch: Partial<Omit<Member, 'id'>>) => void;
+  /** Their chores become open to anyone. */
+  removeMember: (id: string) => void;
+  addChore: (input: Omit<Chore, 'id'>) => string;
+  updateChore: (id: string, patch: Partial<Omit<Chore, 'id'>>) => void;
+  removeChore: (id: string) => void;
+  /** Checks a chore off for today, or undoes today's check. */
+  toggleChoreDone: (choreId: string, memberId?: string) => void;
+
   /** Replaces everything with the contents of a backup. */
   restoreAll: (data: BackupData) => void;
 
@@ -142,6 +175,12 @@ const defaults = {
   proJobs: [] as ProJob[],
   purchases: [] as Purchase[],
   seasonChecks: {} as Record<string, string[]>,
+  docs: [] as HomeDoc[],
+  policies: [] as Policy[],
+  claims: [] as Claim[],
+  members: [] as Member[],
+  chores: [] as Chore[],
+  choreLogs: [] as ChoreLog[],
   settings: { remindersOn: true, leadDays: 7 } as Settings,
 };
 
@@ -191,6 +230,10 @@ export const useStore = create<State>()(
           // Pro job records belong to the pro, so they stay without the link.
           proJobs: s.proJobs.map((j) => (j.assetId === id ? { ...j, assetId: undefined } : j)),
           expenses: s.expenses.filter((e) => !s.projects.some((p) => p.assetId === id && p.id === e.projectId)),
+          // Important papers and insurance records are kept. They just lose the link.
+          docs: s.docs.map((d) => (d.assetId === id ? { ...d, assetId: undefined } : d)),
+          policies: s.policies.map((p) => (p.assetId === id ? { ...p, assetId: undefined } : p)),
+          claims: s.claims.map((c) => (c.assetId === id ? { ...c, assetId: undefined } : c)),
         })),
 
       addTask: (input) => {
@@ -365,6 +408,7 @@ export const useStore = create<State>()(
           contacts: [...s.contacts, ...(data.contacts ?? [])],
           proJobs: [...s.proJobs, ...(data.proJobs ?? [])],
           purchases: [...s.purchases, ...(data.purchases ?? [])],
+          docs: [...s.docs, ...(data.docs ?? [])],
         })),
 
       addProJob: (input) => {
@@ -385,14 +429,77 @@ export const useStore = create<State>()(
           return { seasonChecks: { ...s.seasonChecks, [key]: next } };
         }),
 
+      addDoc: (input) => {
+        const id = newId();
+        set((s) => ({ docs: [...s.docs, { ...input, id }] }));
+        return id;
+      },
+      updateDoc: (id, patch) => set((s) => ({ docs: s.docs.map((d) => (d.id === id ? { ...d, ...patch } : d)) })),
+      removeDoc: (id) => set((s) => ({ docs: s.docs.filter((d) => d.id !== id) })),
+
+      addPolicy: (input) => {
+        const id = newId();
+        set((s) => ({ policies: [...s.policies, { ...input, id }] }));
+        return id;
+      },
+      updatePolicy: (id, patch) => set((s) => ({ policies: s.policies.map((p) => (p.id === id ? { ...p, ...patch } : p)) })),
+      removePolicy: (id) =>
+        set((s) => ({
+          policies: s.policies.filter((p) => p.id !== id),
+          claims: s.claims.map((c) => (c.policyId === id ? { ...c, policyId: undefined } : c)),
+        })),
+
+      addClaim: (input) => {
+        const id = newId();
+        set((s) => ({ claims: [...s.claims, { ...input, id }] }));
+        return id;
+      },
+      updateClaim: (id, patch) => set((s) => ({ claims: s.claims.map((c) => (c.id === id ? { ...c, ...patch } : c)) })),
+      removeClaim: (id) => set((s) => ({ claims: s.claims.filter((c) => c.id !== id) })),
+
+      addMember: (input) => {
+        const id = newId();
+        set((s) => ({ members: [...s.members, { ...input, name: input.name.trim(), id }] }));
+        return id;
+      },
+      updateMember: (id, patch) => set((s) => ({ members: s.members.map((m) => (m.id === id ? { ...m, ...patch } : m)) })),
+      removeMember: (id) =>
+        set((s) => ({
+          members: s.members.filter((m) => m.id !== id),
+          chores: s.chores.map((c) => (c.memberId === id ? { ...c, memberId: undefined } : c)),
+          choreLogs: s.choreLogs.map((l) => (l.memberId === id ? { ...l, memberId: undefined } : l)),
+        })),
+
+      addChore: (input) => {
+        const id = newId();
+        set((s) => ({ chores: [...s.chores, { ...input, title: input.title.trim(), id }] }));
+        return id;
+      },
+      updateChore: (id, patch) => set((s) => ({ chores: s.chores.map((c) => (c.id === id ? { ...c, ...patch } : c)) })),
+      removeChore: (id) =>
+        set((s) => ({ chores: s.chores.filter((c) => c.id !== id), choreLogs: s.choreLogs.filter((l) => l.choreId !== id) })),
+
+      toggleChoreDone: (choreId, memberId) =>
+        set((s) => {
+          const today = todayStr();
+          const mine = s.choreLogs.find((l) => l.choreId === choreId && l.doneAt === today);
+          if (mine) return { choreLogs: s.choreLogs.filter((l) => l.id !== mine.id) };
+          const chore = s.chores.find((c) => c.id === choreId);
+          if (!chore) return {};
+          return { choreLogs: [...s.choreLogs, { id: newId(), choreId, memberId: memberId ?? chore.memberId, doneAt: today }] };
+        }),
+
       restoreAll: (data) =>
         set((s) => ({
+          ...defaults,
           ...data,
           // The agreement to the safety notice belongs to this install, not the backup.
           settings: {
             ...data.settings,
             disclaimerVersion: s.settings.disclaimerVersion,
             disclaimerAcceptedAt: s.settings.disclaimerAcceptedAt,
+            // A restore is also the way back in after a forgotten household PIN.
+            householdPin: undefined,
           },
         })),
 
@@ -404,7 +511,7 @@ export const useStore = create<State>()(
       name: 'upkeep-v1',
       version: 1,
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: ({ assets, tasks, logs, warranties, appliances, projects, expenses, contacts, proJobs, purchases, seasonChecks, settings }) => ({
+      partialize: ({
         assets,
         tasks,
         logs,
@@ -416,6 +523,31 @@ export const useStore = create<State>()(
         proJobs,
         purchases,
         seasonChecks,
+        docs,
+        policies,
+        claims,
+        members,
+        chores,
+        choreLogs,
+        settings,
+      }) => ({
+        assets,
+        tasks,
+        logs,
+        warranties,
+        appliances,
+        projects,
+        expenses,
+        contacts,
+        proJobs,
+        purchases,
+        seasonChecks,
+        docs,
+        policies,
+        claims,
+        members,
+        chores,
+        choreLogs,
         settings,
       }),
       onRehydrateStorage: () => () => {
