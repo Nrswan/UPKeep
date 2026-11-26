@@ -171,27 +171,32 @@ export default function SettingsScreen() {
         <Button kind="danger" label="Erase all data" onPress={confirmReset} />
       </Card>
 
-      <SectionTitle>Tip the developer</SectionTitle>
-      <Card style={local.gap}>
-        <View style={local.tipHead}>
-          <View style={[local.tipIcon, { backgroundColor: t.warnBg }]}>
-            <Ionicons name="cafe" size={22} color={t.warn} />
-          </View>
-          <View style={local.tipText}>
-            <Text style={[ui.title, { color: t.text }]}>Built by {DEVELOPER_NAME}</Text>
-            <Text style={[ui.sub, { color: t.sub }]}>
-              {APP_NAME} is a one person project. If it saved you a repair bill or a lost receipt, a tip helps keep it going.
-            </Text>
-          </View>
-        </View>
-        {TIP_LINKS.length ? (
-          TIP_LINKS.map((l) => (
-            <Button key={l.url} kind="plain" icon="heart-outline" label={`Tip with ${l.label}`} onPress={() => Linking.openURL(l.url)} />
-          ))
-        ) : (
-          <Text style={[local.small, { color: t.sub }]}>Tipping is coming soon. Thanks for using {APP_NAME}.</Text>
-        )}
-      </Card>
+      {/* Shown once tip links are added in src/lib/tip.ts. */}
+      {TIP_LINKS.length ? (
+        <>
+          <SectionTitle>Tip the developer</SectionTitle>
+          <Card style={local.gap}>
+            <View style={local.tipHead}>
+              <View style={[local.tipIcon, { backgroundColor: t.warnBg }]}>
+                <Ionicons name="cafe" size={22} color={t.warn} />
+              </View>
+              <View style={local.tipText}>
+                <Text style={[ui.title, { color: t.text }]}>Built by {DEVELOPER_NAME}</Text>
+                <Text style={[ui.sub, { color: t.sub }]}>
+                  {APP_NAME} is a one person project. If it saved you a repair bill or a lost receipt, a tip helps keep it going.
+                </Text>
+              </View>
+            </View>
+            {TIP_LINKS.length ? (
+              TIP_LINKS.map((l) => (
+                <Button key={l.url} kind="plain" icon="heart-outline" label={`Tip with ${l.label}`} onPress={() => Linking.openURL(l.url)} />
+              ))
+            ) : (
+              <Text style={[local.small, { color: t.sub }]}>Tipping is coming soon. Thanks for using {APP_NAME}.</Text>
+            )}
+          </Card>
+        </>
+      ) : null}
 
       <Text style={[local.small, local.center, { color: t.sub }]}>
         Starter schedules are general rules of thumb. Check your owner's manual for exact intervals.

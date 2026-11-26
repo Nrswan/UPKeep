@@ -7,8 +7,14 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.yourname.upkeep"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.nickswanson.yourhomee",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +24,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.yourname.upkeep"
+      "package": "com.nickswanson.yourhomee"
     },
     "web": {
       "favicon": "./assets/favicon.png"
