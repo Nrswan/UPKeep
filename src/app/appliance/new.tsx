@@ -29,7 +29,7 @@ export default function NewAppliance() {
 
   return (
     <Screen>
-      <Text style={[ui.sub, { color: t.sub }]}>Pick the type you have. Its upkeep tasks are added for you and you can change them later.</Text>
+      <Text style={[ui.sub, { color: t.sub }]}>Pick the type you have. Its upkeep tasks are added for you. Not sure? Pick that and we will show you how to check.</Text>
 
       {APPLIANCES.map((c) => (
         <Card key={c.key} style={local.row}>
@@ -47,6 +47,9 @@ export default function NewAppliance() {
                   onPress={() => add(c.key, o.key)}
                 />
               ))}
+              {c.options.length > 1 ? (
+                <Button small kind="plain" icon="help-circle-outline" label="Not sure" onPress={() => add(c.key, 'unsure')} />
+              ) : null}
             </View>
           </View>
         </Card>

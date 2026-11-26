@@ -162,3 +162,45 @@ test('recall results are read whatever the key capitalization', () => {
   assert.deepEqual(normalizeRecalls(null), []);
   assert.deepEqual(normalizeRecalls('oops'), []);
 });
+
+test('every appliance has a setup question and every type has a how to tell guide', async () => {
+  const { APPLIANCES, findOption, UNSURE } = await import('../src/lib/appliances.ts');
+  const { questionFor } = await import('../src/lib/identify.ts');
+  for (const c of APPLIANCES) {
+    const q = questionFor(c.key);
+    assert.ok(q, `question for ${c.key}`);
+    if (c.options.length > 1) {
+      assert.deepEqual(q.guide.map((g) => g.option).sort(), c.options.map((o) => o.key).sort(), `guide covers every ${c.key} type`);
+      for (const g of q.guide) assert.ok(g.signs.length >= 2, `${c.key} ${g.option} has signs`);
+      const unsure = findOption(c.key, UNSURE);
+      assert.equal(unsure.label, `${c.label} (type not set)`);
+    }
+  }
+  // Gas appliances always carry the safety line.
+  for (const k of ['waterheater', 'range', 'dryer', 'heating']) assert.match(questionFor(k).safety, /smell gas/);
+});
+
+test('not sure only adds upkeep that is safe for every type', async () => {
+  const { findOption, UNSURE } = await import('../src/lib/appliances.ts');
+  const titles = (c) => findOption(c, UNSURE).tasks.map((x) => x.title);
+  assert.deepEqual(titles('range'), ['Clean range hood filter']);
+  assert.deepEqual(titles('waterheater'), ['Test water heater relief valve']);
+  assert.ok(!titles('dryer').some((x) => /gas/i.test(x)));
+  assert.ok(!titles('range').some((x) => /gas|burner/i.test(x)));
+  assert.deepEqual(titles('cooling'), []);
+});
+
+test('changing type swaps tasks but keeps anything with history', async () => {
+  const { planTypeChange } = await import('../src/lib/appliances.ts');
+  const current = [
+    { id: 'a', title: 'Clean range burner ports and igniters' },
+    { id: 'b', title: 'Check range gas line connector' },
+    { id: 'c', title: 'Clean range hood filter' },
+  ];
+  const plan = planTypeChange(current, new Set(['a']), 'range', 'electric');
+  assert.deepEqual(plan.removeIds, ['b']);
+  assert.deepEqual(plan.add.map((x) => x.title), ['Clean range drip pans and check elements']);
+  const fromUnsure = planTypeChange([{ id: 'r', title: 'Test water heater relief valve' }], new Set(), 'waterheater', 'gas');
+  assert.deepEqual(fromUnsure.removeIds, []);
+  assert.equal(fromUnsure.add.length, 3);
+});

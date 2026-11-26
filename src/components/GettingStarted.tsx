@@ -15,6 +15,8 @@ export function GettingStarted() {
   const assets = useStore((s) => s.assets);
   const logs = useStore((s) => s.logs);
   const warranties = useStore((s) => s.warranties);
+  const appliances = useStore((s) => s.appliances);
+  const unsure = appliances.filter((a) => a.option === 'unsure');
   const hidden = useStore((s) => s.settings.hideStart);
   const updateSettings = useStore((s) => s.updateSettings);
 
@@ -54,6 +56,15 @@ export function GettingStarted() {
       go: () => router.push('/warranty/new'),
     },
   ];
+
+  if (unsure.length) {
+    steps.splice(1, 0, {
+      label: unsure.length === 1 ? `Find out what kind of ${unsure[0].name.replace(' (type not set)', '').toLowerCase()} you have` : `Check the type of ${unsure.length} appliances`,
+      hint: 'We will show you what to look for. It takes a minute.',
+      done: false,
+      go: () => router.push({ pathname: '/appliance/[id]', params: { id: unsure[0].id } }),
+    });
+  }
 
   const doneCount = steps.filter((s) => s.done).length;
   if (hidden || doneCount === steps.length) return null;

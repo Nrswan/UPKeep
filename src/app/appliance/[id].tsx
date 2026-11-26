@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
 import { Banner } from '../../components/Banner';
+import { IdentifyGuide } from '../../components/IdentifyGuide';
 import { PhotoStrip } from '../../components/PhotoStrip';
 import { TaskRow } from '../../components/TaskRow';
 import { Button, Card, Empty, Field, Screen, SectionTitle, styles as ui } from '../../components/ui';
-import { applianceLook } from '../../lib/appliances';
+import { applianceLook, findCategory, UNSURE } from '../../lib/appliances';
+import { questionFor } from '../../lib/identify';
 import { removePhotos } from '../../lib/photos';
 import { useStore } from '../../lib/store';
 import { useTheme } from '../../lib/theme';
@@ -21,6 +23,8 @@ export default function ApplianceDetail() {
   const updateAppliance = useStore((s) => s.updateAppliance);
   const removeAppliance = useStore((s) => s.removeAppliance);
   const items = useDueItems(item?.assetId, id);
+  const setApplianceType = useStore((s) => s.setApplianceType);
+  const [choosing, setChoosing] = useState(false);
 
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
@@ -79,6 +83,14 @@ export default function ApplianceDetail() {
       },
     ]);
 
+  const q = questionFor(item.category);
+  const canChooseType = !!q && q.guide.length > 0 && (findCategory(item.category)?.options.length ?? 0) > 1;
+  const unsure = item.option === UNSURE;
+  const pickType = (option: string) => {
+    setApplianceType(item.id, option);
+    setChoosing(false);
+  };
+
   const facts: [string, string][] = [];
   if (item.brand) facts.push(['Brand', item.brand]);
   if (item.model) facts.push(['Model', item.model]);
@@ -96,6 +108,19 @@ export default function ApplianceDetail() {
         subtitle={[item.brand, item.model].filter(Boolean).join(' ') || undefined}
         height={170}
       />
+
+      {canChooseType && q && (unsure || choosing) ? (
+        <Card style={unsure ? { ...local.gap, borderColor: t.warn } : local.gap}>
+          <Text style={[ui.title, { color: t.text }]}>{unsure ? 'Not sure what type this is?' : 'Change the type'}</Text>
+          <Text style={[ui.sub, { color: t.sub }]}>
+            {unsure
+              ? 'Check for these signs, then tap the one that matches. The right upkeep is added and the rest is removed.'
+              : 'Tasks that fit the new type are added. Tasks you have already logged are kept so no history is lost.'}
+          </Text>
+          <IdentifyGuide q={q} current={unsure ? undefined : item.option} onPick={pickType} />
+          {choosing ? <Button kind="plain" label="Cancel" onPress={() => setChoosing(false)} /> : null}
+        </Card>
+      ) : null}
 
       {editing ? (
         <Card style={local.gap}>
@@ -120,6 +145,9 @@ export default function ApplianceDetail() {
           ))}
           {item.note ? <Text style={[ui.sub, { color: t.text }]}>{item.note}</Text> : null}
           <Button small kind="plain" icon="create-outline" label="Edit details" onPress={startEdit} />
+          {canChooseType && !unsure && !choosing ? (
+            <Button small kind="plain" icon="swap-horizontal" label="Change type" onPress={() => setChoosing(true)} />
+          ) : null}
         </Card>
       )}
 

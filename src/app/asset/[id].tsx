@@ -225,7 +225,7 @@ export default function AssetDetail() {
                       {a.name}
                     </Text>
                     <Text style={[ui.sub, { color: overdue > 0 ? t.danger : soon > 0 ? t.warn : t.sub }]}>
-                      {[summary, [a.brand, a.model].filter(Boolean).join(' ')].filter(Boolean).join('  ·  ')}
+                      {[a.option === 'unsure' ? 'Type not set' : '', summary, [a.brand, a.model].filter(Boolean).join(' ')].filter(Boolean).join('  ·  ')}
                     </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={20} color={t.sub} />

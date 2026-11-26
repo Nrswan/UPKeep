@@ -4,7 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { todayStr } from './due';
 import type { Preset } from './presets';
-import { findOption } from './appliances';
+import { findOption, planTypeChange } from './appliances';
 import type { BackupData } from './backup';
 import type {
   Appliance,
@@ -89,6 +89,8 @@ type State = {
   addAppliance: (input: { assetId: string; category: string; option: string; name?: string }) => string;
   updateAppliance: (id: string, patch: Partial<Omit<Appliance, 'id' | 'assetId'>>) => void;
   removeAppliance: (id: string) => void;
+  /** Switches an appliance to another type and swaps its upkeep tasks to match. */
+  setApplianceType: (id: string, option: string) => void;
 
   addWarranty: (input: Omit<WarrantyItem, 'id'>) => string;
   updateWarranty: (id: string, patch: Partial<Omit<WarrantyItem, 'id'>>) => void;
@@ -227,6 +229,34 @@ export const useStore = create<State>()(
 
       updateAppliance: (id, patch) =>
         set((s) => ({ appliances: s.appliances.map((a) => (a.id === id ? { ...a, ...patch } : a)) })),
+
+      setApplianceType: (id, option) =>
+        set((s) => {
+          const item = s.appliances.find((a) => a.id === id);
+          if (!item || item.option === option) return {};
+          const mine = s.tasks.filter((t) => t.applianceId === id);
+          const logged = new Set(s.logs.map((l) => l.taskId));
+          const plan = planTypeChange(mine, logged, item.category, option);
+          const gone = new Set(plan.removeIds);
+          const today = todayStr();
+          const added: Task[] = plan.add.map((p) => ({
+            id: newId(),
+            assetId: item.assetId,
+            applianceId: id,
+            title: p.title,
+            note: p.note,
+            everyMonths: p.everyMonths,
+            startAt: today,
+          }));
+          // Keep a name the owner typed. Replace the default one.
+          const oldLabel = findOption(item.category, item.option)?.label;
+          const newLabel = findOption(item.category, option)?.label;
+          const name = item.name === oldLabel && newLabel ? newLabel : item.name;
+          return {
+            appliances: s.appliances.map((a) => (a.id === id ? { ...a, option, name } : a)),
+            tasks: [...s.tasks.filter((t) => !gone.has(t.id)), ...added],
+          };
+        }),
 
       removeAppliance: (id) =>
         set((s) => {

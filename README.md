@@ -12,6 +12,7 @@ Home and vehicle maintenance reminders for iPhone and Android. One codebase, bui
 - One tap to mark a task done, or open it to log a past date, mileage, cost and a note
 - History per task and money spent this year per home or vehicle
 - Year, make and model dropdowns for vehicles. Models come live from NHTSA's free vPIC service, with type-your-own as the fallback
+- Step by step setup for homes and vehicles, one question per screen. Every appliance needs an answer, and "I'm not sure" comes with a how to tell guide
 - Home appliances by type: swamp cooler or refrigerated air, gas or electric range, dryer and water heater, plus more. Each type adds its own upkeep tasks and holds brand, model, serial number and photos
 - Parts and specs on any task, such as oil weight and filter number. They prefill when you log the job and each log keeps what was used
 - DIY Tracker on each home: projects by room, expenses by category such as floors, paint or vanity, receipt photos, a budget and before and after pictures
@@ -67,6 +68,7 @@ src/lib/
   taskIcon.ts       icon and color for each kind of task
   presets.ts        starter schedules. Edit these freely
   appliances.ts     appliance types and the upkeep each one needs
+  identify.ts       setup questions and how to tell gas from electric and similar
   specs.ts          suggested parts and specs fields per task
   why.ts            why each job matters
   effort.ts         difficulty and time guide per job

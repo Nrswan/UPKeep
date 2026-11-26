@@ -19,7 +19,15 @@ export type ApplianceCategory = {
   icon: IconName;
   color: string;
   options: ApplianceOption[];
+  /**
+   * Safe upkeep for any type, used when the owner is not sure which type they
+   * have. Only categories with more than one type need this.
+   */
+  unsureTasks?: Preset[];
 };
+
+/** Option key for an appliance whose type the owner has not worked out yet. */
+export const UNSURE = 'unsure';
 
 /**
  * What a home can have and the upkeep each type needs. The type matters: a
@@ -72,6 +80,7 @@ export const APPLIANCES: ApplianceCategory[] = [
     label: 'Heating',
     icon: 'fire',
     color: '#C2410C',
+    unsureTasks: [{ title: 'Replace HVAC air filter', everyMonths: 3 }],
     options: [
       {
         key: 'gas',
@@ -108,6 +117,7 @@ export const APPLIANCES: ApplianceCategory[] = [
     label: 'Range',
     icon: 'stove',
     color: '#B45309',
+    unsureTasks: [{ title: 'Clean range hood filter', everyMonths: 6 }],
     options: [
       {
         key: 'gas',
@@ -135,6 +145,10 @@ export const APPLIANCES: ApplianceCategory[] = [
     label: 'Dryer',
     icon: 'tumble-dryer',
     color: '#7C3AED',
+    unsureTasks: [
+      { title: 'Clean dryer vent duct', everyMonths: 12 },
+      { title: 'Wash dryer lint screen and clean its housing', everyMonths: 6 },
+    ],
     options: [
       {
         key: 'gas',
@@ -162,6 +176,7 @@ export const APPLIANCES: ApplianceCategory[] = [
     label: 'Water heater',
     icon: 'water-boiler',
     color: '#BE123C',
+    unsureTasks: [{ title: 'Test water heater relief valve', everyMonths: 12 }],
     options: [
       {
         key: 'gas',
@@ -264,7 +279,31 @@ export function findCategory(key: string): ApplianceCategory | undefined {
 }
 
 export function findOption(category: string, option: string): ApplianceOption | undefined {
-  return findCategory(category)?.options.find((o) => o.key === option);
+  const c = findCategory(category);
+  if (!c) return undefined;
+  if (option === UNSURE) {
+    return { key: UNSURE, label: `${c.label} (type not set)`, chip: 'Not sure', tasks: c.unsureTasks ?? [] };
+  }
+  return c.options.find((o) => o.key === option);
+}
+
+/**
+ * What changes when an appliance's type is changed. Tasks the new type also
+ * uses are kept. Old tasks with history are kept too, so no records are lost.
+ */
+export function planTypeChange(
+  current: { id: string; title: string }[],
+  loggedTaskIds: Set<string>,
+  category: string,
+  newOption: string
+): { removeIds: string[]; add: Preset[] } {
+  const next = findOption(category, newOption)?.tasks ?? [];
+  const nextTitles = new Set(next.map((t) => t.title.toLowerCase()));
+  const haveTitles = new Set(current.map((t) => t.title.toLowerCase()));
+  return {
+    removeIds: current.filter((t) => !nextTitles.has(t.title.toLowerCase()) && !loggedTaskIds.has(t.id)).map((t) => t.id),
+    add: next.filter((t) => !haveTitles.has(t.title.toLowerCase())),
+  };
 }
 
 /** Icon and color for an appliance, with a neutral fallback for custom ones. */
