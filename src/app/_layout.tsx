@@ -51,6 +51,10 @@ export default function RootLayout() {
         <Stack.Screen name="pro/[id]" options={{ title: '' }} />
         <Stack.Screen name="pro/job" options={{ title: 'Job', presentation: 'modal' }} />
         <Stack.Screen name="seasonal" options={{ title: 'Seasonal checklist' }} />
+        <Stack.Screen name="buys" options={{ title: 'Things I buy' }} />
+        <Stack.Screen name="buy" options={{ title: 'Add', presentation: 'modal' }} />
+        <Stack.Screen name="asset/transfer" options={{ title: 'Hand off' }} />
+        <Stack.Screen name="import" options={{ title: 'Import records', presentation: 'modal' }} />
         <Stack.Screen name="disclaimer" options={{ title: 'Safety and disclaimer' }} />
         <Stack.Screen name="warranty/new" options={{ title: 'Add a warranty', presentation: 'modal' }} />
         <Stack.Screen name="warranty/[id]" options={{ title: 'Warranty' }} />

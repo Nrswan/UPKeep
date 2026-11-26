@@ -14,6 +14,8 @@ Your Home-E is your homie for keeping the house and the car in shape. Home-E is 
 - Year, make and model dropdowns for vehicles. Models come live from NHTSA's free vPIC service, with type-your-own as the fallback
 - A home screen with Home-E the dog, whose face changes with how things are going, plus a home health score, levels for logging jobs, quick tiles and a daily tip
 - Who to call on every job that has a matching trade: the kind of pro, your saved pros first, a Google search for new ones and what to look for when hiring
+- Things I buy: the products each home or vehicle uses, like paint colors with code and sheen, bulbs, flooring, filters and tires, with store, price, photos, search and a Buy it again search
+- Hand off to the next owner: export one home or vehicle with its history, appliances, products, projects and the pros who worked on it. Costs are optional and tenant details are never included. The buyer imports it from Settings
 - Pros tab: save the pros you trust with rating, phone, email and website, plus every job they did with receipts and photos. Logged upkeep can record which pro did it
 - Step by step setup for homes and vehicles, one question per screen. Every appliance needs an answer, and "I'm not sure" comes with a how to tell guide
 - Home appliances by type: swamp cooler or refrigerated air, gas or electric range, dryer and water heater, plus more. Each type adds its own upkeep tasks and holds brand, model, serial number and photos
@@ -78,6 +80,8 @@ src/lib/
   tip.ts            developer name and tip links
   legal.ts          safety notice and disclaimer text
   backup.ts         backup file format, building and checking (pure, tested)
+  transfer.ts       hand off files for a new owner (pure, tested)
+  purchases.ts      product kinds and the details saved for each
   report.ts         the printable maintenance record (pure, tested)
   io.ts             file sharing for backups and PDF reports
   seasons.ts        seasonal checklist items

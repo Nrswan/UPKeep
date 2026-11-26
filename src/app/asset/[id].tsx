@@ -6,6 +6,7 @@ import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Banner, BannerStat } from '../../components/Banner';
 import { SpecFields, SpecList } from '../../components/SpecFields';
 import { RecallCard } from '../../components/RecallCard';
+import { PurchaseCard } from '../../components/PurchaseCard';
 import { TaskRow } from '../../components/TaskRow';
 import { Button, Card, Empty, Field, IconBadge, Screen, SectionTitle, styles as ui, toNumber } from '../../components/ui';
 import { applianceLook } from '../../lib/appliances';
@@ -27,6 +28,7 @@ export default function AssetDetail() {
   const asset = useStore((s) => s.assets.find((a) => a.id === id));
   const logs = useStore((s) => s.logs);
   const allAppliances = useStore((s) => s.appliances);
+  const allPurchases = useStore((s) => s.purchases);
   const allProjects = useStore((s) => s.projects);
   const allExpenses = useStore((s) => s.expenses);
   const updateAsset = useStore((s) => s.updateAsset);
@@ -45,6 +47,8 @@ export default function AssetDetail() {
   }
 
   const appliances = allAppliances.filter((a) => a.assetId === asset.id);
+  // Newest first. Reversing keeps the most recently added on top when dates match.
+  const buys = [...allPurchases].reverse().filter((p) => p.assetId === asset.id).sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
   const general = items.filter((i) => !i.task.applianceId);
   const projects = allProjects.filter((p) => p.assetId === asset.id);
   const projectExpenses = allExpenses.filter((e) => projects.some((p) => p.id === e.projectId));
@@ -103,6 +107,7 @@ export default function AssetDetail() {
       expenses: s.expenses,
       contacts: s.contacts,
       proJobs: s.proJobs,
+      purchases: s.purchases,
       today: todayStr(),
     });
     try {
@@ -178,6 +183,26 @@ export default function AssetDetail() {
           </>
         )}
       </Card>
+
+      <SectionTitle>Things I buy ({buys.length})</SectionTitle>
+      {buys.length === 0 ? (
+        <Text style={[ui.sub, { color: t.sub }]}>
+          {asset.kind === 'home'
+            ? 'Save the bulbs, paint colors, flooring and filters this home uses so you can buy the same thing next time.'
+            : 'Save the tires, oil, wipers and parts this vehicle takes so you can buy the same thing next time.'}
+        </Text>
+      ) : null}
+      {buys.slice(0, 3).map((p) => (
+        <PurchaseCard key={p.id} p={p} />
+      ))}
+      <View style={ui.row}>
+        <Button small kind="plain" icon="add" label="Add something" onPress={() => router.push({ pathname: '/buy', params: { assetId: asset.id } })} />
+        {buys.length > 3 ? (
+          <Button small kind="plain" icon="list-outline" label={`See all ${buys.length}`} onPress={() => router.push({ pathname: '/buys', params: { assetId: asset.id } })} />
+        ) : buys.length ? (
+          <Button small kind="plain" icon="search-outline" label="Open the list" onPress={() => router.push({ pathname: '/buys', params: { assetId: asset.id } })} />
+        ) : null}
+      </View>
 
       {asset.kind === 'vehicle' ? <RecallCard asset={asset} /> : null}
 
@@ -307,6 +332,12 @@ export default function AssetDetail() {
         icon="add"
         label="Add a task"
         onPress={() => router.push({ pathname: '/task/new', params: { assetId: asset.id } })}
+      />
+      <Button
+        kind="plain"
+        icon="key-outline"
+        label={asset.kind === 'home' ? 'Selling or moving? Hand off to the next owner' : 'Selling it? Hand off to the next owner'}
+        onPress={() => router.push({ pathname: '/asset/transfer', params: { id: asset.id } })}
       />
       <Button kind="danger" label={`Remove ${asset.name}`} onPress={confirmRemove} />
     </Screen>

@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 
 import { type BackupData, buildBackup, type ParsedBackup, parseBackup, photoNames } from './backup';
 import { todayStr } from './due';
+import { buildTransfer, type ParsedTransfer, parseTransfer, transferPhotoNames } from './transfer';
 
 /**
  * Everything that reads or writes files outside the app: backups and PDF
@@ -68,16 +69,67 @@ export async function exportBackup(data: BackupData, includePhotos: boolean): Pr
 
 /** Lets the user pick a backup file and reads it. Resolves to null if they cancel. Throws a user-ready Error on a bad file. */
 export async function pickBackup(): Promise<ParsedBackup | null> {
+  const text = await pickText();
+  return text == null ? null : parseBackup(text);
+}
+
+/** Lets the user pick a transfer file from a previous owner and reads it. Null if they cancel. */
+export async function pickTransfer(): Promise<ParsedTransfer | null> {
+  const text = await pickText();
+  return text == null ? null : parseTransfer(text);
+}
+
+async function pickText(): Promise<string | null> {
   const picked = await DocumentPicker.getDocumentAsync({ type: ['application/json', 'text/plain', '*/*'], copyToCacheDirectory: true });
   if (picked.canceled || !picked.assets?.length) return null;
   const asset = picked.assets[0];
-  let text: string;
   try {
-    text = native ? await new File(asset.uri).text() : await (asset.file ? asset.file.text() : (await fetch(asset.uri)).text());
+    return native ? await new File(asset.uri).text() : await (asset.file ? asset.file.text() : (await fetch(asset.uri)).text());
   } catch {
     throw new Error('Could not read that file.');
   }
-  return parseBackup(text);
+}
+
+/** Reads the app's saved photo files as base64, for files that go to another phone. */
+async function readPhotos(names: string[]): Promise<{ photos: Record<string, string>; missing: number }> {
+  const photos: Record<string, string> = {};
+  let missing = 0;
+  if (!native) return { photos, missing };
+  for (const name of names) {
+    try {
+      const file = new File(photoDir(), name);
+      if (file.exists) photos[name] = await file.base64();
+      else missing++;
+    } catch {
+      missing++;
+    }
+  }
+  return { photos, missing };
+}
+
+/** Writes text to a file and opens the share sheet. On web it downloads instead. */
+async function shareText(name: string, text: string, dialogTitle: string): Promise<void> {
+  if (!native) {
+    downloadOnWeb(name, text, 'application/json');
+    return;
+  }
+  const out = new File(Paths.cache, name);
+  if (out.exists) await out.delete();
+  out.create();
+  await out.write(text);
+  await Sharing.shareAsync(out.uri, { mimeType: 'application/json', dialogTitle, UTI: 'public.json' });
+}
+
+/**
+ * Makes a transfer file for one home or vehicle and opens the share sheet,
+ * so the seller can AirDrop, text or email it to the next owner.
+ */
+export async function exportTransfer(data: ParsedTransfer['data'], includePhotos: boolean): Promise<{ photos: number; missing: number }> {
+  const { photos, missing } = includePhotos ? await readPhotos(transferPhotoNames(data)) : { photos: {}, missing: 0 };
+  const text = buildTransfer(data, photos, new Date().toISOString());
+  const safe = (data.assets[0]?.name ?? 'home').replace(/[^\w -]+/g, '').trim().replace(/\s+/g, '-') || 'home';
+  await shareText(`${safe}-records-for-new-owner.json`, text, 'Send records to the new owner');
+  return { photos: Object.keys(photos).length, missing };
 }
 
 /** Puts the photos from a backup back into the app's photo folder. */

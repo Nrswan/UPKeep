@@ -124,6 +124,7 @@ export default function HomeScreen() {
                     </View>
                   ))}
                 </Card>
+                <Button kind="plain" label="Moving in? Import from the previous owner" icon="key-outline" onPress={() => router.push('/import')} />
                 <Button kind="plain" label="Track a warranty" icon="shield-checkmark-outline" onPress={() => router.push('/warranty/new')} />
               </View>
             </View>

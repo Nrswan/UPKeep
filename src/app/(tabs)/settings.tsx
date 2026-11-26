@@ -32,6 +32,7 @@ export default function SettingsScreen() {
       ...s.projects.flatMap((p) => p.photos),
       ...s.expenses.flatMap((e) => e.photos),
       ...s.proJobs.flatMap((j) => j.photos),
+      ...s.purchases.flatMap((p) => p.photos),
     ]);
     resetAll();
   };
@@ -153,6 +154,7 @@ export default function SettingsScreen() {
         </View>
         <Button icon="cloud-upload-outline" label={busy ? 'Working' : 'Back up now'} disabled={busy} onPress={backUp} />
         <Button kind="plain" icon="cloud-download-outline" label="Restore from a backup" disabled={busy} onPress={restore} />
+        <Button kind="plain" icon="key-outline" label="Import from a previous owner" disabled={busy} onPress={() => router.push('/import')} />
         {backupNote ? <Text style={[ui.sub, { color: t.text }]}>{backupNote}</Text> : null}
         <Text style={[local.small, { color: t.sub }]}>Backups with many photos can be large. The file is not encrypted, so keep it somewhere private.</Text>
       </Card>

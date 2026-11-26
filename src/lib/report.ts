@@ -1,6 +1,7 @@
 import { APP_NAME } from './brand';
 import { describeMonths, formatDate, warrantyInfo } from './due';
-import type { Appliance, Asset, Contact, Expense, LogEntry, ProJob, Project, Task, WarrantyItem } from './types';
+import { purchaseCategory } from './purchases';
+import type { Appliance, Asset, Contact, Expense, LogEntry, ProJob, Project, Purchase, Task, WarrantyItem } from './types';
 
 /**
  * Builds a printable record for one home or vehicle as an HTML page. The page
@@ -17,6 +18,7 @@ export type ReportInput = {
   expenses: Expense[];
   contacts?: Contact[];
   proJobs?: ProJob[];
+  purchases?: Purchase[];
   today: string;
 };
 
@@ -134,6 +136,18 @@ export function buildReportHtml(input: ReportInput): string {
       ];
     });
     parts.push(`<h2>Work by pros (${proJobs.length})</h2>${table(['Date', 'Work done', 'Pro', 'Cost'], rows, [3])}`);
+  }
+
+  // Products used
+  const buys = (input.purchases ?? []).filter((p) => p.assetId === asset.id).sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+  if (buys.length) {
+    const rows = buys.map((p) => [
+      esc(purchaseCategory(p.category).label),
+      esc(p.name) + (p.brand ? `<div class="muted">${esc(p.brand)}</div>` : ''),
+      p.specs.map((s) => `${esc(s.label)}: ${esc(s.value)}`).join('<br>'),
+      esc([p.store, p.price != null ? usd(p.price) : ''].filter(Boolean).join(', ')),
+    ]);
+    parts.push(`<h2>Products used (${buys.length})</h2>${table(['Kind', 'Item', 'Details', 'Bought at'], rows)}`);
   }
 
   // Projects

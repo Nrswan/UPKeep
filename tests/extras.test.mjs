@@ -29,6 +29,7 @@ const data = () => ({
     { id: 'e2', projectId: 'p', category: 'Paint', amount: 64.97, date: '2026-03-06', photos: [] },
   ],
   contacts: [{ id: 'k', name: 'Desert Air', trade: 'HVAC', phone: '(505) 555-0100' }],
+  purchases: [{ id: 'pu', assetId: 'h', category: 'paint', name: 'Living room walls', brand: 'Sherwin-Williams', store: 'Home Depot', price: 54.98, specs: [{ label: 'Color name', value: 'Agreeable Gray' }], photos: ['g.jpg'] }],
   proJobs: [{ id: 'j', contactId: 'k', assetId: 'h', title: 'Replaced <the> blower motor', date: '2026-07-02', cost: 410, photos: ['f.jpg'] }],
   seasonChecks: { '2026-fall': ['fa-gutters'] },
   settings: { remindersOn: false, leadDays: 14 },
@@ -46,7 +47,7 @@ test('a backup round trips with every list and its photos', () => {
 });
 
 test('photo names are collected once from everywhere they are used', () => {
-  assert.deepEqual(photoNames(data()).sort(), ['a.jpg', 'b.jpg', 'c.jpg', 'd.jpg', 'e.jpg', 'f.jpg']);
+  assert.deepEqual(photoNames(data()).sort(), ['a.jpg', 'b.jpg', 'c.jpg', 'd.jpg', 'e.jpg', 'f.jpg', 'g.jpg']);
 });
 
 test('bad backup files are refused with a clear message', () => {

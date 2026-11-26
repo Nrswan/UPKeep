@@ -85,6 +85,27 @@ export type Contact = {
   note?: string;
 };
 
+/** A product bought for a home or vehicle, saved so it is easy to buy again. */
+export type Purchase = {
+  id: string;
+  assetId: string;
+  /** Key from lib/purchases.ts, or "other". */
+  category: string;
+  /** What it is: "Kitchen can lights", "Living room walls". */
+  name: string;
+  brand?: string;
+  /** Where it was bought. */
+  store?: string;
+  price?: number;
+  /** Local date (YYYY-MM-DD) it was bought. */
+  date?: string;
+  /** Category details such as color code, sheen or bulb base. */
+  specs: Spec[];
+  note?: string;
+  /** The product, its label or the receipt. */
+  photos: string[];
+};
+
 /** A job a pro did, with its receipt and records. */
 export type ProJob = {
   id: string;

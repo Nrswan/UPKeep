@@ -12,6 +12,7 @@ import type {
   AssetKind,
   Contact,
   ProJob,
+  Purchase,
   Expense,
   LogEntry,
   Project,
@@ -21,7 +22,7 @@ import type {
   WarrantyItem,
 } from './types';
 
-const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+export const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
 /** Builds an appliance record and the tasks its type calls for. */
 function buildAppliance(assetId: string, category: string, option: string, today: string, name?: string) {
@@ -59,6 +60,8 @@ type State = {
   contacts: Contact[];
   /** Records of work done by pros, with receipts. */
   proJobs: ProJob[];
+  /** Products bought for each home or vehicle. */
+  purchases: Purchase[];
   /** Seasonal checklist items ticked off, keyed by year and season: "2026-fall". */
   seasonChecks: Record<string, string[]>;
   hydrated: boolean;
@@ -110,6 +113,11 @@ type State = {
   updateContact: (id: string, patch: Partial<Omit<Contact, 'id'>>) => void;
   /** Also removes the pro's job records. Upkeep logs they did are kept. */
   removeContact: (id: string) => void;
+  addPurchase: (input: Omit<Purchase, 'id'>) => string;
+  updatePurchase: (id: string, patch: Partial<Omit<Purchase, 'id'>>) => void;
+  removePurchase: (id: string) => void;
+  /** Adds records received from a previous owner. */
+  importRecords: (data: Partial<BackupData>) => void;
   addProJob: (input: Omit<ProJob, 'id'>) => string;
   updateProJob: (id: string, patch: Partial<Omit<ProJob, 'id' | 'contactId'>>) => void;
   removeProJob: (id: string) => void;
@@ -132,6 +140,7 @@ const defaults = {
   expenses: [] as Expense[],
   contacts: [] as Contact[],
   proJobs: [] as ProJob[],
+  purchases: [] as Purchase[],
   seasonChecks: {} as Record<string, string[]>,
   settings: { remindersOn: true, leadDays: 7 } as Settings,
 };
@@ -178,6 +187,7 @@ export const useStore = create<State>()(
           logs: s.logs.filter((l) => l.assetId !== id),
           appliances: s.appliances.filter((a) => a.assetId !== id),
           projects: s.projects.filter((p) => p.assetId !== id),
+          purchases: s.purchases.filter((p) => p.assetId !== id),
           // Pro job records belong to the pro, so they stay without the link.
           proJobs: s.proJobs.map((j) => (j.assetId === id ? { ...j, assetId: undefined } : j)),
           expenses: s.expenses.filter((e) => !s.projects.some((p) => p.assetId === id && p.id === e.projectId)),
@@ -332,6 +342,31 @@ export const useStore = create<State>()(
           logs: s.logs.map((l) => (l.contactId === id ? { ...l, contactId: undefined } : l)),
         })),
 
+      addPurchase: (input) => {
+        const id = newId();
+        set((s) => ({ purchases: [...s.purchases, { ...input, id }] }));
+        return id;
+      },
+
+      updatePurchase: (id, patch) =>
+        set((s) => ({ purchases: s.purchases.map((p) => (p.id === id ? { ...p, ...patch } : p)) })),
+
+      removePurchase: (id) => set((s) => ({ purchases: s.purchases.filter((p) => p.id !== id) })),
+
+      importRecords: (data) =>
+        set((s) => ({
+          assets: [...s.assets, ...(data.assets ?? [])],
+          tasks: [...s.tasks, ...(data.tasks ?? [])],
+          logs: [...s.logs, ...(data.logs ?? [])],
+          warranties: [...s.warranties, ...(data.warranties ?? [])],
+          appliances: [...s.appliances, ...(data.appliances ?? [])],
+          projects: [...s.projects, ...(data.projects ?? [])],
+          expenses: [...s.expenses, ...(data.expenses ?? [])],
+          contacts: [...s.contacts, ...(data.contacts ?? [])],
+          proJobs: [...s.proJobs, ...(data.proJobs ?? [])],
+          purchases: [...s.purchases, ...(data.purchases ?? [])],
+        })),
+
       addProJob: (input) => {
         const id = newId();
         set((s) => ({ proJobs: [...s.proJobs, { ...input, id }] }));
@@ -369,7 +404,7 @@ export const useStore = create<State>()(
       name: 'upkeep-v1',
       version: 1,
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: ({ assets, tasks, logs, warranties, appliances, projects, expenses, contacts, proJobs, seasonChecks, settings }) => ({
+      partialize: ({ assets, tasks, logs, warranties, appliances, projects, expenses, contacts, proJobs, purchases, seasonChecks, settings }) => ({
         assets,
         tasks,
         logs,
@@ -379,6 +414,7 @@ export const useStore = create<State>()(
         expenses,
         contacts,
         proJobs,
+        purchases,
         seasonChecks,
         settings,
       }),
