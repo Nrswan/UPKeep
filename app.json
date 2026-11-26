@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Home-E",
+    "name": "Your Home-E",
     "slug": "home-e",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -30,8 +30,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Home-E uses your photos so you can attach pictures of receipts, warranties and the things you maintain.",
-          "cameraPermission": "Home-E uses the camera so you can take pictures of receipts, warranties and the things you maintain.",
+          "photosPermission": "Your Home-E uses your photos so you can attach pictures of receipts, warranties and the things you maintain.",
+          "cameraPermission": "Your Home-E uses the camera so you can take pictures of receipts, warranties and the things you maintain.",
           "microphonePermission": false
         }
       ]

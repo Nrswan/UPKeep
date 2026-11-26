@@ -8,7 +8,7 @@ import { GettingStarted } from '../../components/GettingStarted';
 import { Mascot, type Mood } from '../../components/Mascot';
 import { TaskRow } from '../../components/TaskRow';
 import { Button, Card, Empty, IconBadge, SectionTitle, styles as ui } from '../../components/ui';
-import { APP_NAME } from '../../lib/brand';
+import { MASCOT_NAME } from '../../lib/brand';
 import { todayStr, warrantyInfo } from '../../lib/due';
 import { greeting, healthLabel, healthScore, level, tipOfDay } from '../../lib/fun';
 import { useStore } from '../../lib/store';
@@ -108,7 +108,7 @@ export default function HomeScreen() {
           contentContainerStyle={local.listPad}
           ListHeaderComponent={
             <View style={local.header}>
-              <Hero mood="happy" title={`Hey, I'm ${APP_NAME}`} line="Your homie for keeping the house and the car in shape. Let's get you set up." />
+              <Hero mood="happy" title={`Hey, I'm ${MASCOT_NAME}`} line="Your homie for keeping the house and the car in shape. Let's get you set up." />
               <View style={local.inner}>
                 <Button label="Add a home or vehicle" icon="add" onPress={() => router.push('/asset/new')} />
                 <GettingStarted />
@@ -230,7 +230,7 @@ export default function HomeScreen() {
               <Card style={local.tip}>
                 <Mascot mood="happy" size={52} />
                 <View style={local.flex}>
-                  <Text style={[ui.label, { color: t.sub }]}>{APP_NAME.toUpperCase()}'S TIP OF THE DAY</Text>
+                  <Text style={[ui.label, { color: t.sub }]}>{MASCOT_NAME.toUpperCase()}'S TIP OF THE DAY</Text>
                   <Text style={[local.tipText, { color: t.text }]}>{tipOfDay(today)}</Text>
                 </View>
               </Card>

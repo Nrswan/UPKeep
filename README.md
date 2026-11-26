@@ -1,8 +1,8 @@
-# Home-E
+# Your Home-E
 
 Home and vehicle maintenance reminders for iPhone and Android. One codebase, built with Expo (React Native) and TypeScript.
 
-Home-E is your homie for keeping the house and the car in shape. The name lives in `src/lib/brand.ts`. Note that "HOMEE" is a registered trademark of Homee, Inc. for home services software, so get a trademark check before launch.
+Your Home-E is your homie for keeping the house and the car in shape. Home-E is the dog on the home screen. The name lives in `src/lib/brand.ts`. Note that "HOMEE" is a registered trademark of Homee, Inc. for home services software, so get a trademark check before launch.
 
 ## What it does
 

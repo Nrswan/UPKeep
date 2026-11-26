@@ -5,7 +5,6 @@ import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
 import { type BackupData, buildBackup, type ParsedBackup, parseBackup, photoNames } from './backup';
-import { APP_NAME } from './brand';
 import { todayStr } from './due';
 
 /**
@@ -63,7 +62,7 @@ export async function exportBackup(data: BackupData, includePhotos: boolean): Pr
   if (out.exists) await out.delete();
   out.create();
   await out.write(text);
-  await Sharing.shareAsync(out.uri, { mimeType: 'application/json', dialogTitle: `Save your ${APP_NAME} backup`, UTI: 'public.json' });
+  await Sharing.shareAsync(out.uri, { mimeType: 'application/json', dialogTitle: 'Save your backup', UTI: 'public.json' });
   return { photos: Object.keys(photos).length, missing };
 }
 

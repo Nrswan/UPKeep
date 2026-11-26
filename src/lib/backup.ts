@@ -88,11 +88,11 @@ export function parseBackup(text: string): ParsedBackup {
   try {
     raw = JSON.parse(text);
   } catch {
-    throw new Error(`That file is not a ${APP_NAME} backup.`);
+    throw new Error(`That file is not a backup from ${APP_NAME}.`);
   }
   const file = raw as Partial<BackupFile> | null;
   if (!file || typeof file !== 'object' || file.app !== 'upkeep' || !file.data || typeof file.data !== 'object') {
-    throw new Error(`That file is not a ${APP_NAME} backup.`);
+    throw new Error(`That file is not a backup from ${APP_NAME}.`);
   }
   if (typeof file.version !== 'number' || file.version > BACKUP_VERSION) {
     throw new Error(`This backup was made by a newer version of ${APP_NAME}. Update the app and try again.`);

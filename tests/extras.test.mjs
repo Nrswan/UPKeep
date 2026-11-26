@@ -50,9 +50,9 @@ test('photo names are collected once from everywhere they are used', () => {
 });
 
 test('bad backup files are refused with a clear message', () => {
-  assert.throws(() => parseBackup('not json'), /not a Home-E backup/);
-  assert.throws(() => parseBackup('{"app":"other","data":{}}'), /not a Home-E backup/);
-  assert.throws(() => parseBackup('[]'), /not a Home-E backup/);
+  assert.throws(() => parseBackup('not json'), /not a backup from Your Home-E/);
+  assert.throws(() => parseBackup('{"app":"other","data":{}}'), /not a backup from Your Home-E/);
+  assert.throws(() => parseBackup('[]'), /not a backup from Your Home-E/);
   assert.throws(() => parseBackup(JSON.stringify({ app: 'upkeep', version: 99, data: {} })), /newer version/);
   assert.throws(() => parseBackup(JSON.stringify({ app: 'upkeep', version: 1, data: { assets: 'nope' } })), /damaged/);
 });
