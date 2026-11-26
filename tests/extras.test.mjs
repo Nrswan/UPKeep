@@ -29,6 +29,7 @@ const data = () => ({
     { id: 'e2', projectId: 'p', category: 'Paint', amount: 64.97, date: '2026-03-06', photos: [] },
   ],
   contacts: [{ id: 'k', name: 'Desert Air', trade: 'HVAC', phone: '(505) 555-0100' }],
+  proJobs: [{ id: 'j', contactId: 'k', assetId: 'h', title: 'Replaced <the> blower motor', date: '2026-07-02', cost: 410, photos: ['f.jpg'] }],
   seasonChecks: { '2026-fall': ['fa-gutters'] },
   settings: { remindersOn: false, leadDays: 14 },
 });
@@ -45,13 +46,13 @@ test('a backup round trips with every list and its photos', () => {
 });
 
 test('photo names are collected once from everywhere they are used', () => {
-  assert.deepEqual(photoNames(data()).sort(), ['a.jpg', 'b.jpg', 'c.jpg', 'd.jpg', 'e.jpg']);
+  assert.deepEqual(photoNames(data()).sort(), ['a.jpg', 'b.jpg', 'c.jpg', 'd.jpg', 'e.jpg', 'f.jpg']);
 });
 
 test('bad backup files are refused with a clear message', () => {
-  assert.throws(() => parseBackup('not json'), /not an Upkeep backup/);
-  assert.throws(() => parseBackup('{"app":"other","data":{}}'), /not an Upkeep backup/);
-  assert.throws(() => parseBackup('[]'), /not an Upkeep backup/);
+  assert.throws(() => parseBackup('not json'), /not a Home-E backup/);
+  assert.throws(() => parseBackup('{"app":"other","data":{}}'), /not a Home-E backup/);
+  assert.throws(() => parseBackup('[]'), /not a Home-E backup/);
   assert.throws(() => parseBackup(JSON.stringify({ app: 'upkeep', version: 99, data: {} })), /newer version/);
   assert.throws(() => parseBackup(JSON.stringify({ app: 'upkeep', version: 1, data: { assets: 'nope' } })), /damaged/);
 });
@@ -81,6 +82,9 @@ test('the report includes the right records and escapes what the owner typed', (
   assert.ok(html.includes('$477.35'));
   assert.ok(html.includes('Lowe&#39;s'));
   assert.ok(html.includes('Service history (2)'));
+  assert.ok(html.includes('Work by pros (1)'));
+  assert.ok(html.includes('Replaced &lt;the&gt; blower motor'));
+  assert.ok(html.includes('Desert Air'));
   assert.ok(!html.includes('Oil and filter change'), 'another asset\'s work stays out');
 
   const car = buildReportHtml({ ...d, asset: d.assets[1], today: '2026-11-10' });
@@ -203,4 +207,42 @@ test('changing type swaps tasks but keeps anything with history', async () => {
   const fromUnsure = planTypeChange([{ id: 'r', title: 'Test water heater relief valve' }], new Set(), 'waterheater', 'gas');
   assert.deepEqual(fromUnsure.removeIds, []);
   assert.equal(fromUnsure.add.length, 3);
+});
+
+test('who to call: the right search for each job', async () => {
+  const { searchFor, googleUrl, tradeInfo, initials, webUrl, TRADES } = await import('../src/lib/contacts.ts');
+  assert.equal(searchFor('Replace cooler pads', 'HVAC'), 'swamp cooler service near me');
+  assert.equal(searchFor('Schedule AC tune-up', 'HVAC'), 'HVAC technician near me');
+  assert.equal(searchFor('Clean dryer vent duct', 'Appliance repair'), 'dryer vent cleaning near me');
+  assert.equal(searchFor('Inspect brakes', 'Mechanic'), 'brake repair near me');
+  assert.equal(searchFor('Clean refrigerator coils', 'Appliance repair'), 'appliance repair near me');
+  assert.equal(searchFor('Something odd', 'Pool service'), 'Pool service near me');
+  assert.equal(googleUrl('HVAC technician near me'), 'https://www.google.com/search?q=HVAC%20technician%20near%20me');
+  for (const k of TRADES) assert.ok(tradeInfo(k).search.endsWith('near me'), k);
+  assert.equal(initials("Sal's Garage"), 'SG');
+  assert.equal(initials('Mike'), 'MI');
+  assert.equal(initials('  '), '?');
+  assert.equal(webUrl('example.com'), 'https://example.com');
+  assert.equal(webUrl('http://x.com'), 'http://x.com');
+});
+
+test('home screen score, level, greeting and tip', async () => {
+  const { greeting, healthScore, healthLabel, level, tipOfDay, TIPS } = await import('../src/lib/fun.ts');
+  assert.equal(greeting(2), 'Up late?');
+  assert.equal(greeting(8), 'Good morning');
+  assert.equal(greeting(13), 'Good afternoon');
+  assert.equal(greeting(20), 'Good evening');
+  assert.equal(healthScore([]), 100);
+  assert.equal(healthScore(['ok', 'ok', 'unlogged', 'ok']), 100);
+  assert.equal(healthScore(['overdue', 'ok', 'ok', 'ok']), 75);
+  assert.equal(healthScore(['soon', 'ok']), 75);
+  assert.equal(healthLabel(95), 'Great shape');
+  assert.equal(healthLabel(40), 'Time to catch up');
+  assert.deepEqual(level(0), { name: 'Rookie', next: 'Handy', toNext: 5, progress: 0 });
+  assert.equal(level(5).name, 'Handy');
+  assert.equal(level(14).toNext, 1);
+  assert.deepEqual(level(100), { name: 'Master', toNext: 0, progress: 1 });
+  assert.equal(tipOfDay('2026-11-26'), tipOfDay('2026-11-26'));
+  assert.notEqual(tipOfDay('2026-11-26'), tipOfDay('2026-11-27'));
+  assert.ok(TIPS.includes(tipOfDay('2027-02-28')));
 });

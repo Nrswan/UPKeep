@@ -1,5 +1,7 @@
 import { Directory, File, Paths } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
+
+import { APP_NAME } from './brand';
 import { Alert, Linking, Platform } from 'react-native';
 
 /**
@@ -20,7 +22,7 @@ export function photoUri(name: string): string {
 }
 
 function blocked(what: string) {
-  Alert.alert(`${what} access is off`, `Turn it on for Upkeep in your phone settings to add photos.`, [
+  Alert.alert(`${what} access is off`, `Turn it on for ${APP_NAME} in your phone settings to add photos.`, [
     { text: 'Not now', style: 'cancel' },
     { text: 'Open settings', onPress: () => Linking.openSettings() },
   ]);

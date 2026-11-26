@@ -68,4 +68,5 @@ export const gradients = {
   warranty: ['#7B56D6', '#4B2FA0'],
   hero: ['#1F8A63', '#176B7A', '#1B4E96'],
   diy: ['#E07B1F', '#B8431C'],
+  pros: ['#2D7FD3', '#5B3FB8'],
 } as const;

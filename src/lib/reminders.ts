@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
+import { APP_NAME } from './brand';
 import { addDays, computeDue, latestLog, parseDate, todayStr, WARRANTY_SOON_DAYS, warrantyInfo } from './due';
 import type { Asset, LogEntry, Settings, Task, WarrantyItem } from './types';
 
@@ -98,7 +99,7 @@ export function planReminders(snap: Snapshot, now: Date = new Date()): PlannedRe
     out.push({
       at,
       title: overdue === 1 ? '1 task is overdue' : `${overdue} tasks are overdue`,
-      body: 'Open Upkeep to check them off.',
+      body: `Open ${APP_NAME} to check them off.`,
     });
   }
   return out;
@@ -138,7 +139,7 @@ export async function sendTestReminder(seconds = 5): Promise<'sent' | 'blocked' 
   if (!supported) return 'unsupported';
   if (!(await ensurePermission())) return 'blocked';
   await Notifications.scheduleNotificationAsync({
-    content: { title: 'Reminders are working', body: 'This is how Upkeep will let you know when something is due.' },
+    content: { title: 'Reminders are working', body: `This is how ${APP_NAME} will let you know when something is due.` },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds, channelId: 'reminders' },
   });
   return 'sent';

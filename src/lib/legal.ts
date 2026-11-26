@@ -1,3 +1,4 @@
+import { APP_NAME } from './brand';
 import { DEVELOPER_NAME } from './tip';
 
 /**
@@ -15,18 +16,18 @@ export const SHORT_NOTICE =
 
 /** The points shown on the first launch screen. */
 export const KEY_POINTS: string[] = [
-  'Upkeep gives general reminders and information. It is not professional advice for your home or vehicle.',
+  `${APP_NAME} gives general reminders and information. It is not professional advice for your home or vehicle.`,
   'You are responsible for deciding whether a job is safe for you to do and for doing it safely.',
   'Always follow the manufacturer\'s instructions, your owner\'s manual and local codes. They come first.',
   'When you are unsure, or the job involves gas, electricity, heights or brakes, hire a licensed professional.',
-  'You use Upkeep at your own risk. The developer is not liable for damage, injury or loss.',
+  `You use ${APP_NAME} at your own risk. The developer is not liable for damage, injury or loss.`,
 ];
 
 export const DISCLAIMER: { title: string; body: string }[] = [
   {
     title: 'General information only',
     body:
-      'Upkeep provides general maintenance reminders, schedules, explanations, difficulty and time estimates and tips for informational purposes only. Nothing in the app is professional advice, including mechanical, electrical, plumbing, gas, HVAC, roofing, construction, safety, legal or financial advice. The app does not know the condition, age, design or history of your home, appliances or vehicle.',
+      `${APP_NAME} provides general maintenance reminders, schedules, explanations, difficulty and time estimates and tips for informational purposes only. Nothing in the app is professional advice, including mechanical, electrical, plumbing, gas, HVAC, roofing, construction, safety, legal or financial advice. The app does not know the condition, age, design or history of your home, appliances or vehicle.`,
   },
   {
     title: 'Manufacturer instructions and codes come first',
@@ -46,25 +47,25 @@ export const DISCLAIMER: { title: string; body: string }[] = [
   {
     title: 'Emergencies',
     body:
-      'Upkeep is not an emergency service. If you smell gas, leave the building right away and call your gas utility or 911 from outside. If a carbon monoxide alarm sounds, get everyone to fresh air and call 911. For a fire or a medical emergency, call 911.',
+      `${APP_NAME} is not an emergency service. If you smell gas, leave the building right away and call your gas utility or 911 from outside. If a carbon monoxide alarm sounds, get everyone to fresh air and call 911. For a fire or a medical emergency, call 911.`,
   },
   {
     title: 'Reminders and records',
     body:
-      'Reminders depend on your phone, its settings and the information you enter. A reminder may be late or may not arrive. Do not rely on Upkeep as your only way to keep track of safety critical maintenance, warranty deadlines or registration dates. Your data is stored only on your phone and can be lost if the app is deleted or the phone is lost, reset or damaged. Keep your own copies of important receipts and records.',
+      `Reminders depend on your phone, its settings and the information you enter. A reminder may be late or may not arrive. Do not rely on ${APP_NAME} as your only way to keep track of safety critical maintenance, warranty deadlines or registration dates. Your data is stored only on your phone and can be lost if the app is deleted or the phone is lost, reset or damaged. Keep your own copies of important receipts and records.`,
   },
   {
     title: 'No warranty',
     body:
-      'Upkeep is provided "as is" and "as available" without warranties of any kind, express or implied, including warranties of accuracy, merchantability and fitness for a particular purpose. No promise is made that the information in the app is complete, current or right for your home or vehicle.',
+      `${APP_NAME} is provided "as is" and "as available" without warranties of any kind, express or implied, including warranties of accuracy, merchantability and fitness for a particular purpose. No promise is made that the information in the app is complete, current or right for your home or vehicle.`,
   },
   {
     title: 'Limitation of liability',
-    body: `To the fullest extent permitted by law, ${DEVELOPER_NAME} and anyone involved in creating or distributing Upkeep are not liable for any property damage, personal injury, death, loss, cost or other damages of any kind arising from your use of the app, from work you or anyone else performs, or from your reliance on anything in the app. You use Upkeep and act on its content entirely at your own risk. Some places do not allow certain limits on liability, so parts of this section may not apply to you.`,
+    body: `To the fullest extent permitted by law, ${DEVELOPER_NAME} and anyone involved in creating or distributing ${APP_NAME} are not liable for any property damage, personal injury, death, loss, cost or other damages of any kind arising from your use of the app, from work you or anyone else performs, or from your reliance on anything in the app. You use ${APP_NAME} and act on its content entirely at your own risk. Some places do not allow certain limits on liability, so parts of this section may not apply to you.`,
   },
   {
     title: 'Your agreement',
     body:
-      'By using Upkeep you confirm that you have read and understood this notice and that you accept these terms. If you do not agree, do not use the app.',
+      `By using ${APP_NAME} you confirm that you have read and understood this notice and that you accept these terms. If you do not agree, do not use the app.`,
   },
 ];

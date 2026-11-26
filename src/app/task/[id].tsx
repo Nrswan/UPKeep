@@ -1,18 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PhotoStrip } from '../../components/PhotoStrip';
 import { SpecFields, SpecList } from '../../components/SpecFields';
 import { TaskForm } from '../../components/TaskForm';
+import { WhoToCall } from '../../components/WhoToCall';
 import { Button, Card, DateStepper, Empty, Field, Screen, SectionTitle, StatusPill, styles as ui, toNumber } from '../../components/ui';
 import { computeDue, describeInterval, formatDate, latestLog, todayStr } from '../../lib/due';
 import { removePhotos } from '../../lib/photos';
 import { cleanSpecs, specRows, suggestedSpecLabels } from '../../lib/specs';
 import { useStore } from '../../lib/store';
 import { useTheme } from '../../lib/theme';
-import { dialable, tradeFor } from '../../lib/contacts';
+import { tradeFor } from '../../lib/contacts';
 import { effortFor, effortLabel } from '../../lib/effort';
 import { SHORT_NOTICE } from '../../lib/legal';
 import { whyItMatters } from '../../lib/why';
@@ -37,6 +38,7 @@ export default function TaskDetail() {
   const [cost, setCost] = useState('');
   const [note, setNote] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
+  const [doneBy, setDoneBy] = useState<string | undefined>(undefined);
   const [specs, setSpecs] = useState<Spec[]>([]);
 
   const history = useMemo(
@@ -59,7 +61,6 @@ export default function TaskDetail() {
   const why = whyItMatters(task.title);
   const effort = effortFor(task.title);
   const trade = tradeFor(task.title);
-  const pro = trade ? contacts.find((c) => c.trade === trade) : undefined;
 
   const openLog = () => {
     setDoneAt(todayStr());
@@ -67,6 +68,7 @@ export default function TaskDetail() {
     setCost('');
     setNote('');
     setPhotos([]);
+    setDoneBy(undefined);
     setSpecs(specRows(task.title, task.specs));
     setMode('log');
   };
@@ -76,6 +78,7 @@ export default function TaskDetail() {
     logDone(task.id, { doneAt, miles: isVehicle && m != null ? Math.round(m) : undefined, cost: toNumber(cost),
       note,
       photos,
+      contactId: doneBy,
       // Only touch saved specs when the form showed some.
       specs: specs.length ? cleanSpecs(specs) : undefined,
     });
@@ -115,23 +118,6 @@ export default function TaskDetail() {
           </View>
         ) : null}
         {effort?.tip ? <Text style={[ui.sub, { color: t.sub }]}>{effort.tip}</Text> : null}
-        {pro ? (
-          <Button
-            small
-            kind="plain"
-            icon="call-outline"
-            label={pro.phone ? `Call ${pro.name}` : `${pro.name} (add a phone number)`}
-            onPress={() => (pro.phone ? Linking.openURL(`tel:${dialable(pro.phone)}`) : router.push('/contacts'))}
-          />
-        ) : trade && effort?.level === 'pro' ? (
-          <Button
-            small
-            kind="plain"
-            icon="person-add-outline"
-            label={`Save your ${trade === 'HVAC' ? 'HVAC tech' : trade.toLowerCase()} to call`}
-            onPress={() => router.push({ pathname: '/contacts', params: { trade } })}
-          />
-        ) : null}
         {due.dueDate ? <Text style={[ui.sub, { color: t.sub }]}>Next by date: {formatDate(due.dueDate)}</Text> : null}
         {due.dueMiles != null ? (
           <Text style={[ui.sub, { color: t.sub }]}>Next by mileage: {due.dueMiles.toLocaleString()} mi</Text>
@@ -155,6 +141,8 @@ export default function TaskDetail() {
           </Text>
         ) : null}
       </Card>
+
+      {trade && mode === 'view' ? <WhoToCall title={task.title} trade={trade} level={effort?.level} /> : null}
 
       {mode !== 'specs' && mode !== 'log' ? (
         <Card style={local.gap}>
@@ -211,6 +199,20 @@ export default function TaskDetail() {
           ) : null}
           <Field label="Cost (optional)" value={cost} onChangeText={setCost} keyboardType="decimal-pad" placeholder="0.00" />
           <Field label="Note (optional)" value={note} onChangeText={setNote} placeholder="Parts used, shop, anything worth remembering" />
+          {contacts.length ? (
+            <View style={ui.field}>
+              <Text style={[ui.label, { color: t.sub }]}>Who did the work?</Text>
+              <View style={ui.row}>
+                <Button small kind={doneBy ? 'plain' : 'primary'} icon="person-outline" label="I did" onPress={() => setDoneBy(undefined)} />
+                {[...contacts]
+                  .sort((a, b) => Number(b.trade === trade) - Number(a.trade === trade))
+                  .slice(0, 6)
+                  .map((c) => (
+                    <Button key={c.id} small kind={doneBy === c.id ? 'primary' : 'plain'} label={c.name} onPress={() => setDoneBy(c.id)} />
+                  ))}
+              </View>
+            </View>
+          ) : null}
           <Text style={[ui.label, { color: t.sub }]}>WHAT YOU USED</Text>
           <SpecFields title={task.title} rows={specs} onChange={setSpecs} />
           <PhotoStrip label="Photos of the receipt or work (optional)" photos={photos} onChange={setPhotos} />
@@ -257,6 +259,9 @@ export default function TaskDetail() {
                 .filter(Boolean)
                 .join('  ·  ') || 'Done'}
             </Text>
+            {l.contactId && contacts.some((c) => c.id === l.contactId) ? (
+              <Text style={[ui.sub, { color: t.primary }]}>Done by {contacts.find((c) => c.id === l.contactId)!.name}</Text>
+            ) : null}
             {l.specs?.length ? (
               <Text style={[ui.sub, { color: t.sub }]}>{l.specs.map((x) => `${x.label}: ${x.value}`).join('  ·  ')}</Text>
             ) : null}

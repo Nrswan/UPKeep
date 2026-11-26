@@ -57,7 +57,6 @@ export default function AssetsScreen() {
 
       <Button label="Add a home or vehicle" icon="add" onPress={() => router.push('/asset/new')} />
       <Button kind="plain" icon="leaf-outline" label="Seasonal checklist" onPress={() => router.push('/seasonal')} />
-      <Button kind="plain" icon="call-outline" label="Service contacts" onPress={() => router.push('/contacts')} />
     </Screen>
   );
 }

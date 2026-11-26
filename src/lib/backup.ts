@@ -2,6 +2,7 @@ import type {
   Appliance,
   Asset,
   Contact,
+  ProJob,
   Expense,
   LogEntry,
   Project,
@@ -9,6 +10,7 @@ import type {
   Task,
   WarrantyItem,
 } from './types';
+import { APP_NAME } from './brand';
 
 /** Everything the app saves. This is also the shape of a backup file's data. */
 export type BackupData = {
@@ -20,13 +22,14 @@ export type BackupData = {
   projects: Project[];
   expenses: Expense[];
   contacts: Contact[];
+  proJobs: ProJob[];
   seasonChecks: Record<string, string[]>;
   settings: Settings;
 };
 
 export const BACKUP_VERSION = 1;
 
-const LISTS = ['assets', 'tasks', 'logs', 'warranties', 'appliances', 'projects', 'expenses', 'contacts'] as const;
+const LISTS = ['assets', 'tasks', 'logs', 'warranties', 'appliances', 'projects', 'expenses', 'contacts', 'proJobs'] as const;
 
 type BackupFile = {
   app: 'upkeep';
@@ -48,13 +51,16 @@ export function pickData(state: BackupData): BackupData {
     projects: state.projects,
     expenses: state.expenses,
     contacts: state.contacts,
+    proJobs: state.proJobs,
     seasonChecks: state.seasonChecks,
     settings: state.settings,
   };
 }
 
 /** Every photo file name the data points to, without repeats. */
-export function photoNames(data: Pick<BackupData, 'assets' | 'logs' | 'warranties' | 'appliances' | 'projects' | 'expenses'>): string[] {
+export function photoNames(
+  data: Pick<BackupData, 'assets' | 'logs' | 'warranties' | 'appliances' | 'projects' | 'expenses'> & Partial<Pick<BackupData, 'proJobs'>>
+): string[] {
   const names = new Set<string>();
   const add = (n?: string) => {
     if (n) names.add(n);
@@ -65,6 +71,7 @@ export function photoNames(data: Pick<BackupData, 'assets' | 'logs' | 'warrantie
   data.appliances.forEach((a) => a.photos.forEach(add));
   data.projects.forEach((p) => p.photos.forEach(add));
   data.expenses.forEach((e) => e.photos.forEach(add));
+  data.proJobs?.forEach((j) => j.photos.forEach(add));
   return [...names];
 }
 
@@ -81,14 +88,14 @@ export function parseBackup(text: string): ParsedBackup {
   try {
     raw = JSON.parse(text);
   } catch {
-    throw new Error('That file is not an Upkeep backup.');
+    throw new Error(`That file is not a ${APP_NAME} backup.`);
   }
   const file = raw as Partial<BackupFile> | null;
   if (!file || typeof file !== 'object' || file.app !== 'upkeep' || !file.data || typeof file.data !== 'object') {
-    throw new Error('That file is not an Upkeep backup.');
+    throw new Error(`That file is not a ${APP_NAME} backup.`);
   }
   if (typeof file.version !== 'number' || file.version > BACKUP_VERSION) {
-    throw new Error('This backup was made by a newer version of Upkeep. Update the app and try again.');
+    throw new Error(`This backup was made by a newer version of ${APP_NAME}. Update the app and try again.`);
   }
 
   const d = file.data as Partial<BackupData>;

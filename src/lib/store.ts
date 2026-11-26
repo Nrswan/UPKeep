@@ -11,6 +11,7 @@ import type {
   Asset,
   AssetKind,
   Contact,
+  ProJob,
   Expense,
   LogEntry,
   Project,
@@ -56,6 +57,8 @@ type State = {
   settings: Settings;
   /** Pros to call, shared across homes and vehicles. */
   contacts: Contact[];
+  /** Records of work done by pros, with receipts. */
+  proJobs: ProJob[];
   /** Seasonal checklist items ticked off, keyed by year and season: "2026-fall". */
   seasonChecks: Record<string, string[]>;
   hydrated: boolean;
@@ -81,7 +84,7 @@ type State = {
 
   logDone: (
     taskId: string,
-    input?: { doneAt?: string; miles?: number; cost?: number; note?: string; photos?: string[]; specs?: Spec[] }
+    input?: { doneAt?: string; miles?: number; cost?: number; note?: string; photos?: string[]; specs?: Spec[]; contactId?: string }
   ) => void;
   removeLog: (id: string) => void;
 
@@ -105,7 +108,11 @@ type State = {
 
   addContact: (input: Omit<Contact, 'id'>) => string;
   updateContact: (id: string, patch: Partial<Omit<Contact, 'id'>>) => void;
+  /** Also removes the pro's job records. Upkeep logs they did are kept. */
   removeContact: (id: string) => void;
+  addProJob: (input: Omit<ProJob, 'id'>) => string;
+  updateProJob: (id: string, patch: Partial<Omit<ProJob, 'id' | 'contactId'>>) => void;
+  removeProJob: (id: string) => void;
   toggleSeasonItem: (key: string, itemId: string) => void;
 
   /** Replaces everything with the contents of a backup. */
@@ -124,6 +131,7 @@ const defaults = {
   projects: [] as Project[],
   expenses: [] as Expense[],
   contacts: [] as Contact[],
+  proJobs: [] as ProJob[],
   seasonChecks: {} as Record<string, string[]>,
   settings: { remindersOn: true, leadDays: 7 } as Settings,
 };
@@ -170,6 +178,8 @@ export const useStore = create<State>()(
           logs: s.logs.filter((l) => l.assetId !== id),
           appliances: s.appliances.filter((a) => a.assetId !== id),
           projects: s.projects.filter((p) => p.assetId !== id),
+          // Pro job records belong to the pro, so they stay without the link.
+          proJobs: s.proJobs.map((j) => (j.assetId === id ? { ...j, assetId: undefined } : j)),
           expenses: s.expenses.filter((e) => !s.projects.some((p) => p.assetId === id && p.id === e.projectId)),
         })),
 
@@ -207,6 +217,7 @@ export const useStore = create<State>()(
           note: input.note?.trim() || undefined,
           photos: input.photos?.length ? input.photos : undefined,
           specs: input.specs?.length ? input.specs : undefined,
+          contactId: input.contactId || undefined,
         };
         set((s) => ({
           logs: [...s.logs, entry],
@@ -314,7 +325,23 @@ export const useStore = create<State>()(
       updateContact: (id, patch) =>
         set((s) => ({ contacts: s.contacts.map((c) => (c.id === id ? { ...c, ...patch } : c)) })),
 
-      removeContact: (id) => set((s) => ({ contacts: s.contacts.filter((c) => c.id !== id) })),
+      removeContact: (id) =>
+        set((s) => ({
+          contacts: s.contacts.filter((c) => c.id !== id),
+          proJobs: s.proJobs.filter((j) => j.contactId !== id),
+          logs: s.logs.map((l) => (l.contactId === id ? { ...l, contactId: undefined } : l)),
+        })),
+
+      addProJob: (input) => {
+        const id = newId();
+        set((s) => ({ proJobs: [...s.proJobs, { ...input, id }] }));
+        return id;
+      },
+
+      updateProJob: (id, patch) =>
+        set((s) => ({ proJobs: s.proJobs.map((j) => (j.id === id ? { ...j, ...patch } : j)) })),
+
+      removeProJob: (id) => set((s) => ({ proJobs: s.proJobs.filter((j) => j.id !== id) })),
 
       toggleSeasonItem: (key, itemId) =>
         set((s) => {
@@ -342,7 +369,7 @@ export const useStore = create<State>()(
       name: 'upkeep-v1',
       version: 1,
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: ({ assets, tasks, logs, warranties, appliances, projects, expenses, contacts, seasonChecks, settings }) => ({
+      partialize: ({ assets, tasks, logs, warranties, appliances, projects, expenses, contacts, proJobs, seasonChecks, settings }) => ({
         assets,
         tasks,
         logs,
@@ -351,6 +378,7 @@ export const useStore = create<State>()(
         projects,
         expenses,
         contacts,
+        proJobs,
         seasonChecks,
         settings,
       }),

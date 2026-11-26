@@ -1,8 +1,8 @@
-# Upkeep
+# Home-E
 
 Home and vehicle maintenance reminders for iPhone and Android. One codebase, built with Expo (React Native) and TypeScript.
 
-"Upkeep" is a working name. Check both app stores for conflicts before you commit to it.
+Home-E is your homie for keeping the house and the car in shape. The name lives in `src/lib/brand.ts`. Note that "HOMEE" is a registered trademark of Homee, Inc. for home services software, so get a trademark check before launch.
 
 ## What it does
 
@@ -12,6 +12,9 @@ Home and vehicle maintenance reminders for iPhone and Android. One codebase, bui
 - One tap to mark a task done, or open it to log a past date, mileage, cost and a note
 - History per task and money spent this year per home or vehicle
 - Year, make and model dropdowns for vehicles. Models come live from NHTSA's free vPIC service, with type-your-own as the fallback
+- A home screen with Home-E the dog, whose face changes with how things are going, plus a home health score, levels for logging jobs, quick tiles and a daily tip
+- Who to call on every job that has a matching trade: the kind of pro, your saved pros first, a Google search for new ones and what to look for when hiring
+- Pros tab: save the pros you trust with rating, phone, email and website, plus every job they did with receipts and photos. Logged upkeep can record which pro did it
 - Step by step setup for homes and vehicles, one question per screen. Every appliance needs an answer, and "I'm not sure" comes with a how to tell guide
 - Home appliances by type: swamp cooler or refrigerated air, gas or electric range, dryer and water heater, plus more. Each type adds its own upkeep tasks and holds brand, model, serial number and photos
 - Parts and specs on any task, such as oil weight and filter number. They prefill when you log the job and each log keeps what was used
@@ -22,7 +25,6 @@ Home and vehicle maintenance reminders for iPhone and Android. One codebase, bui
 - Backup and restore from Settings. One file holds all records and, if chosen, the photos
 - A PDF maintenance record for any home or vehicle: details, appliances, service history, projects, spending by year and warranties
 - Seasonal checklists for spring, summer, fall and winter that fit the appliances and vehicles the user has
-- Service contacts with a call button, shown on the tasks each pro can help with
 - Safety recall lookup for vehicles from NHTSA's free public API
 - Rental properties: flag a home as a rental to add tenant and lease facts and mark it on lists and reports
 - Edit screen for homes and vehicles
@@ -79,7 +81,9 @@ src/lib/
   report.ts         the printable maintenance record (pure, tested)
   io.ts             file sharing for backups and PDF reports
   seasons.ts        seasonal checklist items
-  contacts.ts       trades and which jobs they cover
+  contacts.ts       trades, which jobs they cover, Google searches and hiring tips
+  fun.ts            greeting, home health score, levels and daily tips
+  brand.ts          the app name
   recalls.ts        NHTSA recall lookup
   store.ts          app data, saved to the phone with AsyncStorage
   reminders.ts      local notification scheduling

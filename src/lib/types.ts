@@ -67,6 +67,8 @@ export type LogEntry = {
   photos?: string[];
   /** What was used this time. */
   specs?: Spec[];
+  /** The pro who did the work, if not the owner. */
+  contactId?: string;
 };
 
 /** A pro to call: a plumber, an HVAC tech, a mechanic. */
@@ -76,7 +78,27 @@ export type Contact = {
   /** One of TRADES in lib/contacts.ts, or anything the user typed. */
   trade: string;
   phone?: string;
+  email?: string;
+  website?: string;
+  /** 1 to 5 stars from the owner. */
+  rating?: number;
   note?: string;
+};
+
+/** A job a pro did, with its receipt and records. */
+export type ProJob = {
+  id: string;
+  contactId: string;
+  /** The home or vehicle the work was on, if any. */
+  assetId?: string;
+  /** What they did: "Replaced the water heater". */
+  title: string;
+  /** Local date (YYYY-MM-DD) of the work. */
+  date: string;
+  cost?: number;
+  note?: string;
+  /** Receipts, invoices and before and after pictures. */
+  photos: string[];
 };
 
 /** Something you bought that carries a warranty: an appliance, a roof, a tool. */

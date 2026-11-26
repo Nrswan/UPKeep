@@ -25,16 +25,24 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Due',
+          title: 'Home',
+          headerShown: false,
           tabBarBadge: overdue > 0 ? overdue : undefined,
-          tabBarIcon: ({ focused, size }) => <Ionicons name="checkbox-outline" color={focused ? t.primary : t.sub} size={size} />,
+          tabBarIcon: ({ focused, size }) => <Ionicons name="home-outline" color={focused ? t.primary : t.sub} size={size} />,
         }}
       />
       <Tabs.Screen
         name="assets"
         options={{
           title: 'My stuff',
-          tabBarIcon: ({ focused, size }) => <Ionicons name="home-outline" color={focused ? t.primary : t.sub} size={size} />,
+          tabBarIcon: ({ focused, size }) => <Ionicons name="layers-outline" color={focused ? t.primary : t.sub} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="pros"
+        options={{
+          title: 'Pros',
+          tabBarIcon: ({ focused, size }) => <Ionicons name="people-outline" color={focused ? t.primary : t.sub} size={size} />,
         }}
       />
       <Tabs.Screen

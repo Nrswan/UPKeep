@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Alert, Linking, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { Button, Card, confirmAction, Screen, SectionTitle, styles as ui } from '../../components/ui';
+import { APP_NAME } from '../../lib/brand';
 import { SHORT_NOTICE } from '../../lib/legal';
 import { removePhotos } from '../../lib/photos';
 import { DEVELOPER_NAME, TIP_LINKS } from '../../lib/tip';
@@ -30,6 +31,7 @@ export default function SettingsScreen() {
       ...s.appliances.flatMap((a) => a.photos),
       ...s.projects.flatMap((p) => p.photos),
       ...s.expenses.flatMap((e) => e.photos),
+      ...s.proJobs.flatMap((j) => j.photos),
     ]);
     resetAll();
   };
@@ -117,7 +119,7 @@ export default function SettingsScreen() {
         </View>
         {blocked ? (
           <View style={local.gap}>
-            <Text style={[ui.sub, { color: t.danger }]}>Notifications are turned off for Upkeep in your phone settings.</Text>
+            <Text style={[ui.sub, { color: t.danger }]}>Notifications are turned off for {APP_NAME} in your phone settings.</Text>
             <Button small kind="plain" label="Open phone settings" onPress={() => Linking.openSettings()} />
           </View>
         ) : null}
@@ -178,7 +180,7 @@ export default function SettingsScreen() {
           <View style={local.tipText}>
             <Text style={[ui.title, { color: t.text }]}>Built by {DEVELOPER_NAME}</Text>
             <Text style={[ui.sub, { color: t.sub }]}>
-              Upkeep is a one person project. If it saved you a repair bill or a lost receipt, a tip helps keep it going.
+              {APP_NAME} is a one person project. If it saved you a repair bill or a lost receipt, a tip helps keep it going.
             </Text>
           </View>
         </View>
@@ -187,7 +189,7 @@ export default function SettingsScreen() {
             <Button key={l.url} kind="plain" icon="heart-outline" label={`Tip with ${l.label}`} onPress={() => Linking.openURL(l.url)} />
           ))
         ) : (
-          <Text style={[local.small, { color: t.sub }]}>Tipping is coming soon. Thanks for using Upkeep.</Text>
+          <Text style={[local.small, { color: t.sub }]}>Tipping is coming soon. Thanks for using {APP_NAME}.</Text>
         )}
       </Card>
 

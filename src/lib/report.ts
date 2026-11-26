@@ -1,5 +1,6 @@
+import { APP_NAME } from './brand';
 import { describeMonths, formatDate, warrantyInfo } from './due';
-import type { Appliance, Asset, Expense, LogEntry, Project, Task, WarrantyItem } from './types';
+import type { Appliance, Asset, Contact, Expense, LogEntry, ProJob, Project, Task, WarrantyItem } from './types';
 
 /**
  * Builds a printable record for one home or vehicle as an HTML page. The page
@@ -14,6 +15,8 @@ export type ReportInput = {
   warranties: WarrantyItem[];
   projects: Project[];
   expenses: Expense[];
+  contacts?: Contact[];
+  proJobs?: ProJob[];
   today: string;
 };
 
@@ -64,6 +67,8 @@ export function buildReportHtml(input: ReportInput): string {
   const projects = input.projects.filter((p) => p.assetId === asset.id);
   const projectIds = new Set(projects.map((p) => p.id));
   const expenses = input.expenses.filter((e) => projectIds.has(e.projectId));
+  const contactById = new Map((input.contacts ?? []).map((c) => [c.id, c]));
+  const proJobs = (input.proJobs ?? []).filter((j) => j.assetId === asset.id).sort((a, b) => (a.date < b.date ? 1 : -1));
 
   const parts: string[] = [];
 
@@ -98,6 +103,7 @@ export function buildReportHtml(input: ReportInput): string {
       const appliance = task?.applianceId ? applianceById.get(task.applianceId) : undefined;
       const details = [
         l.miles != null ? `${l.miles.toLocaleString('en-US')} mi` : '',
+        l.contactId && contactById.get(l.contactId) ? `Done by ${contactById.get(l.contactId)!.name}` : '',
         ...(l.specs ?? []).map((s) => `${s.label}: ${s.value}`),
         l.note ?? '',
       ]
@@ -114,6 +120,20 @@ export function buildReportHtml(input: ReportInput): string {
     parts.push(`<h2>Service history (${logs.length})</h2>${table(['Date', 'Work done', 'Details', 'Cost'], rows, [3])}`);
   } else {
     parts.push('<h2>Service history</h2><p class="muted">Nothing logged yet.</p>');
+  }
+
+  // Work by pros
+  if (proJobs.length) {
+    const rows = proJobs.map((j) => {
+      const who = contactById.get(j.contactId);
+      return [
+        esc(formatDate(j.date)),
+        esc(j.title) + (j.note ? `<div class="muted">${esc(j.note)}</div>` : ''),
+        who ? esc(who.name) + (who.phone ? `<div class="muted">${esc(who.phone)}</div>` : '') : '',
+        j.cost != null ? esc(usd(j.cost)) : '',
+      ];
+    });
+    parts.push(`<h2>Work by pros (${proJobs.length})</h2>${table(['Date', 'Work done', 'Pro', 'Cost'], rows, [3])}`);
   }
 
   // Projects
@@ -138,7 +158,10 @@ export function buildReportHtml(input: ReportInput): string {
   }
 
   // Spending
-  const years = spendingByYear(logs, expenses);
+  const years = spendingByYear(
+    [...logs, ...proJobs.map((j) => ({ doneAt: j.date, cost: j.cost }))],
+    expenses
+  );
   if (years.length) {
     const head = isHome ? ['Year', 'Maintenance', 'Projects', 'Total'] : ['Year', 'Maintenance'];
     const rows = years.map((y) =>
@@ -173,7 +196,7 @@ export function buildReportHtml(input: ReportInput): string {
   }
 
   parts.push(
-    `<p class="foot">Made with Upkeep on ${esc(formatDate(today))}. This record lists what the owner entered and is not an inspection, appraisal or guarantee of condition.</p>`
+    `<p class="foot">Made with ${esc(APP_NAME)} on ${esc(formatDate(today))}. This record lists what the owner entered and is not an inspection, appraisal or guarantee of condition.</p>`
   );
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(

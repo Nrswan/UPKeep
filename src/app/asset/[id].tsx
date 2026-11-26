@@ -101,6 +101,8 @@ export default function AssetDetail() {
       warranties: s.warranties,
       projects: s.projects,
       expenses: s.expenses,
+      contacts: s.contacts,
+      proJobs: s.proJobs,
       today: todayStr(),
     });
     try {

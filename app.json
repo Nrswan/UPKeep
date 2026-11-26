@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Upkeep",
-    "slug": "upkeep",
+    "name": "Home-E",
+    "slug": "home-e",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -23,15 +23,15 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "scheme": "upkeep",
+    "scheme": "homee",
     "plugins": [
       "expo-router",
       "expo-notifications",
       [
         "expo-image-picker",
         {
-          "photosPermission": "Upkeep uses your photos so you can attach pictures of receipts, warranties and the things you maintain.",
-          "cameraPermission": "Upkeep uses the camera so you can take pictures of receipts, warranties and the things you maintain.",
+          "photosPermission": "Home-E uses your photos so you can attach pictures of receipts, warranties and the things you maintain.",
+          "cameraPermission": "Home-E uses the camera so you can take pictures of receipts, warranties and the things you maintain.",
           "microphonePermission": false
         }
       ]

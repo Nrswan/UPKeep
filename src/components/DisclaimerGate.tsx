@@ -3,6 +3,7 @@ import { type ReactNode, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { APP_NAME } from '../lib/brand';
 import { DISCLAIMER, DISCLAIMER_VERSION, KEY_POINTS } from '../lib/legal';
 import { useStore } from '../lib/store';
 import { useTheme } from '../lib/theme';
@@ -29,7 +30,7 @@ export function DisclaimerGate({ children }: { children: ReactNode }) {
         </View>
         <Text style={[local.title, { color: t.text }]}>Before you start</Text>
         <Text style={[local.lead, { color: t.sub }]}>
-          Upkeep helps you remember and understand maintenance. Doing the work safely is up to you.
+          {APP_NAME} helps you remember and understand maintenance. Doing the work safely is up to you.
         </Text>
 
         {KEY_POINTS.map((p) => (
